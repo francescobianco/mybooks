@@ -27,8 +27,8 @@ MYBOOKS_MAX_UPLOAD_MB="${MYBOOKS_MAX_UPLOAD_MB:-512}"
 MYBOOKS_SESSION_DAYS="${MYBOOKS_SESSION_DAYS:-90}"
 MYBOOKS_MANAGE_CADDY="${MYBOOKS_MANAGE_CADDY:-1}"
 
-if [ "${#MYBOOKS_API_KEY}" -lt 12 ] || [[ ! "$MYBOOKS_API_KEY" =~ ^[A-Za-z0-9._~+=-]+$ ]]; then
-  echo "MYBOOKS_API_KEY must be >= 12 chars of [A-Za-z0-9._~+=-]" >&2
+if [ "${#MYBOOKS_API_KEY}" -lt 12 ] || [[ "$MYBOOKS_API_KEY" =~ [[:space:]\"\\\'\`\$] ]]; then
+  echo "MYBOOKS_API_KEY must be >= 12 chars, without spaces, quotes, backslash, backtick or \$" >&2
   exit 1
 fi
 
@@ -82,7 +82,7 @@ else
 fi
 
 # ---- config files ----
-ENV_FILE="MYBOOKS_API_KEY=$MYBOOKS_API_KEY
+ENV_FILE="MYBOOKS_API_KEY=\"$MYBOOKS_API_KEY\"
 MYBOOKS_DATA_DIR=/var/lib/mybooks
 MYBOOKS_ADDR=127.0.0.1:$MYBOOKS_PORT
 MYBOOKS_MAX_UPLOAD_MB=$MYBOOKS_MAX_UPLOAD_MB
