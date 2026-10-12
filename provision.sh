@@ -26,6 +26,8 @@ MYBOOKS_PORT="${MYBOOKS_PORT:-8080}"
 MYBOOKS_MAX_UPLOAD_MB="${MYBOOKS_MAX_UPLOAD_MB:-512}"
 MYBOOKS_SESSION_DAYS="${MYBOOKS_SESSION_DAYS:-90}"
 MYBOOKS_MANAGE_CADDY="${MYBOOKS_MANAGE_CADDY:-1}"
+# Kobo's browser can't do HTTPS: also serve plain HTTP (no redirect) by default.
+MYBOOKS_PLAIN_HTTP="${MYBOOKS_PLAIN_HTTP:-1}"
 
 if [ "${#MYBOOKS_API_KEY}" -lt 12 ] || [[ "$MYBOOKS_API_KEY" =~ [[:space:]\"\\\'\`\$] ]]; then
   echo "MYBOOKS_API_KEY must be >= 12 chars, without spaces, quotes, backslash, backtick or \$" >&2
@@ -111,8 +113,10 @@ ReadWritePaths=/var/lib/mybooks
 WantedBy=multi-user.target
 "
 
+SITE_ADDR="$MYBOOKS_DOMAIN"
+[ "$MYBOOKS_PLAIN_HTTP" = 1 ] && SITE_ADDR="http://$MYBOOKS_DOMAIN, https://$MYBOOKS_DOMAIN"
 CADDY_SITE="# managed by mybooks provision.sh
-$MYBOOKS_DOMAIN {
+$SITE_ADDR {
 	encode gzip
 	request_body {
 		max_size $((MYBOOKS_MAX_UPLOAD_MB + 64))MB
