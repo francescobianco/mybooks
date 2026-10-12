@@ -1,0 +1,37 @@
+{{define "head"}}<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · mybooks</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="top">
+  <a class="brand" href="/">mybooks</a>
+  <form class="search" action="/books" method="get"><input type="text" name="q" value="{{.Query}}" placeholder="Cerca titolo, autore…"><button type="submit">Cerca</button></form>
+</div>
+<div id="main">
+{{end}}
+
+{{define "foot"}}
+</div>
+<div id="bottom"><a href="/">Home</a> · <a href="/books">Tutti</a> · <a href="/logout">Esci</a></div>
+</body>
+</html>
+{{end}}
+
+{{define "booklist"}}
+<table class="books">
+{{range .}}
+<tr>
+  <td class="thumb"><a href="/b/{{.ID}}">{{if .CoverExt}}<img src="{{coverURL .}}" alt="">{{else}}<span class="nocover">{{.Format}}</span>{{end}}</a></td>
+  <td class="info">
+    <a class="title" href="/b/{{.ID}}">{{.Title}}</a>
+    {{if .Author}}<div class="author">{{.Author}}</div>{{end}}
+    {{if .Series}}<div class="meta">{{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}</div>{{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+{{end}}

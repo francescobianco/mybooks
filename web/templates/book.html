@@ -1,0 +1,20 @@
+{{template "head" .}}
+{{with .Book}}
+<div class="book">
+  {{if .CoverExt}}<img class="cover" src="{{coverURL .}}" alt="">{{end}}
+  <h1>{{.Title}}</h1>
+  {{if .Author}}<p class="author">{{.Author}}</p>{{end}}
+  {{if .Series}}<p class="meta">{{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}</p>{{end}}
+  <p><a class="button" href="/b/{{.ID}}/download">Scarica {{.Format}} ({{size .Size}})</a></p>
+  {{if .Description}}<div class="desc">{{.Description}}</div>{{end}}
+  <table class="details">
+    {{if $.Category}}<tr><th>Categoria</th><td><a href="/c/{{$.Category.Slug}}">{{$.Category.Name}}</a></td></tr>{{end}}
+    {{if .Year}}<tr><th>Anno</th><td>{{.Year}}</td></tr>{{end}}
+    {{if .Publisher}}<tr><th>Editore</th><td>{{.Publisher}}</td></tr>{{end}}
+    {{if .Language}}<tr><th>Lingua</th><td>{{.Language}}</td></tr>{{end}}
+    {{if .ISBN}}<tr><th>ISBN</th><td>{{.ISBN}}</td></tr>{{end}}
+    {{if .Tags}}<tr><th>Tag</th><td>{{range $i, $t := .Tags}}{{if $i}}, {{end}}<a href="/books?tag={{$t}}">{{$t}}</a>{{end}}</td></tr>{{end}}
+  </table>
+</div>
+{{end}}
+{{template "foot" .}}

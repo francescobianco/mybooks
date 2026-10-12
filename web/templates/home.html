@@ -1,0 +1,17 @@
+{{template "head" .}}
+<h2>Categorie</h2>
+<table class="cats">
+{{range .Categories}}
+<tr><td><a href="/c/{{.Slug}}">{{.Name}}</a>{{if .Description}}<div class="meta">{{.Description}}</div>{{end}}</td><td class="count">{{.Count}}</td></tr>
+{{end}}
+{{if .Uncategorized}}<tr><td><a href="/books?category=-">Senza categoria</a></td><td class="count">{{.Uncategorized}}</td></tr>{{end}}
+<tr><td><a href="/books">Tutti i libri</a></td><td class="count">{{.Total}}</td></tr>
+</table>
+
+{{if .Recent}}
+<h2>Aggiunti di recente</h2>
+{{template "booklist" .Recent}}
+{{else}}
+<p class="empty">La libreria è vuota.</p>
+{{end}}
+{{template "foot" .}}

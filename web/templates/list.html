@@ -1,0 +1,16 @@
+{{template "head" .}}
+<h2>{{.Title}} <span class="meta">({{.Count}})</span></h2>
+<p class="sort">Ordina: <a href="?sort=title{{if .Query}}&amp;q={{.Query}}{{end}}">titolo</a> · <a href="?sort=author{{if .Query}}&amp;q={{.Query}}{{end}}">autore</a> · <a href="?sort=added{{if .Query}}&amp;q={{.Query}}{{end}}">recenti</a></p>
+{{if .Books}}
+{{template "booklist" .Books}}
+{{else}}
+<p class="empty">Nessun libro.</p>
+{{end}}
+{{if gt .Pages 1}}
+<table class="pager"><tr>
+  <td class="prev">{{if .Prev}}<a href="{{.Prev}}">« Indietro</a>{{end}}</td>
+  <td class="pos">{{.Page}} / {{.Pages}}</td>
+  <td class="next">{{if .Next}}<a href="{{.Next}}">Avanti »</a>{{end}}</td>
+</tr></table>
+{{end}}
+{{template "foot" .}}

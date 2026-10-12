@@ -29,3 +29,8 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# mybooks
+/data/
+/mybooks
+/.idea/

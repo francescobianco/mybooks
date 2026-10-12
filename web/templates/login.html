@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login · mybooks</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="login">
+  <h1>mybooks</h1>
+  {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+  <form action="/login" method="post">
+    <input type="password" name="password" placeholder="Password" autofocus>
+    <button type="submit">Entra</button>
+  </form>
+</div>
+</body>
+</html>
