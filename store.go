@@ -30,6 +30,7 @@ type Book struct {
 	Format      string    `json:"format"` // pdf | epub
 	FileName    string    `json:"file_name"`
 	Size        int64     `json:"size"`
+	Pages       int       `json:"pages,omitempty"`
 	SHA256      string    `json:"sha256"`
 	CoverExt    string    `json:"cover_ext,omitempty"` // "" when no cover
 	AddedAt     time.Time `json:"added_at"`
@@ -40,7 +41,16 @@ type Category struct {
 	Slug        string `json:"slug"`
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
+	Parent      string `json:"parent,omitempty"` // parent slug, "" for a root category
 	Order       int    `json:"order,omitempty"`
+}
+
+// CategoryPatch holds optional category fields; nil means "leave unchanged".
+type CategoryPatch struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	Parent      *string `json:"parent"`
+	Order       *int    `json:"order"`
 }
 
 // BookPatch holds optional metadata fields; nil means "leave unchanged".
@@ -56,6 +66,7 @@ type BookPatch struct {
 	Year        *int      `json:"year"`
 	Publisher   *string   `json:"publisher"`
 	ISBN        *string   `json:"isbn"`
+	Pages       *int      `json:"pages"`
 }
 
 type library struct {
@@ -154,22 +165,27 @@ func (s *Store) FindBySHA(sha string) *Book {
 }
 
 type Query struct {
-	Category string // slug; "-" means uncategorized
-	Text     string
-	Tag      string
-	Sort     string // "title" (default), "added", "author"
+	Category  string // slug; "-" means uncategorized
+	Recursive bool   // include books of sub-categories
+	Text      string
+	Tag       string
+	Sort      string // "title" (default), "added", "author"
 }
 
 func (s *Store) List(q Query) []*Book {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	text := fold(q.Text)
+	cats := map[string]bool{q.Category: true}
+	if q.Recursive && q.Category != "-" {
+		cats = s.subtree(q.Category)
+	}
 	var out []*Book
 	for _, b := range s.lib.Books {
 		if q.Category == "-" && b.Category != "" {
 			continue
 		}
-		if q.Category != "" && q.Category != "-" && b.Category != q.Category {
+		if q.Category != "" && q.Category != "-" && !cats[b.Category] {
 			continue
 		}
 		if q.Tag != "" && !containsFold(b.Tags, q.Tag) {
@@ -273,6 +289,9 @@ func (p BookPatch) Apply(b *Book) error {
 	if p.Year != nil {
 		b.Year = *p.Year
 	}
+	if p.Pages != nil {
+		b.Pages = *p.Pages
+	}
 	if b.Title == "" {
 		return errors.New("title cannot be empty")
 	}
@@ -292,26 +311,97 @@ func (s *Store) category(slug string) *Category {
 
 type CategoryCount struct {
 	Category
-	Count int `json:"count"`
+	Count int    `json:"count"` // books directly in this category
+	Total int    `json:"total"` // including sub-categories
+	Path  string `json:"path"`  // e.g. "Scacchi / Finali"
 }
 
+// subtree returns slug and all its descendants. Read lock must be held.
+func (s *Store) subtree(slug string) map[string]bool {
+	set := map[string]bool{slug: true}
+	for changed := true; changed; {
+		changed = false
+		for _, c := range s.lib.Categories {
+			if set[c.Parent] && !set[c.Slug] {
+				set[c.Slug] = true
+				changed = true
+			}
+		}
+	}
+	return set
+}
+
+// path returns the chain of categories from the root down to slug.
+// Read lock must be held.
+func (s *Store) path(slug string) []Category {
+	var out []Category
+	for c := s.category(slug); c != nil && len(out) < 32; c = s.category(c.Parent) {
+		out = append([]Category{*c}, out...)
+	}
+	return out
+}
+
+// Categories returns all categories, sorted depth-first (parents before
+// their children), with book counts.
 func (s *Store) Categories() []CategoryCount {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	return s.categories(nil)
+}
+
+// Children returns the direct sub-categories of parent ("" for roots).
+func (s *Store) Children(parent string) []CategoryCount {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.categories(&parent)
+}
+
+// categories lists the whole tree depth-first, or only the direct children
+// of *parent when parent is not nil. Read lock must be held.
+func (s *Store) categories(parent *string) []CategoryCount {
 	counts := map[string]int{}
 	for _, b := range s.lib.Books {
 		counts[b.Category]++
 	}
-	out := make([]CategoryCount, 0, len(s.lib.Categories))
+	byParent := map[string][]Category{}
 	for _, c := range s.lib.Categories {
-		out = append(out, CategoryCount{c, counts[c.Slug]})
+		byParent[c.Parent] = append(byParent[c.Parent], c)
 	}
-	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].Order != out[j].Order {
-			return out[i].Order < out[j].Order
+	for _, kids := range byParent {
+		sort.SliceStable(kids, func(i, j int) bool {
+			if kids[i].Order != kids[j].Order {
+				return kids[i].Order < kids[j].Order
+			}
+			return fold(kids[i].Name) < fold(kids[j].Name)
+		})
+	}
+	var total func(slug string) int
+	total = func(slug string) int {
+		n := counts[slug]
+		for _, c := range byParent[slug] {
+			n += total(c.Slug)
 		}
-		return fold(out[i].Name) < fold(out[j].Name)
-	})
+		return n
+	}
+	var out []CategoryCount
+	var walk func(parent, prefix string, recurse bool)
+	walk = func(parent, prefix string, recurse bool) {
+		for _, c := range byParent[parent] {
+			out = append(out, CategoryCount{c, counts[c.Slug], total(c.Slug), prefix + c.Name})
+			if recurse {
+				walk(c.Slug, prefix+c.Name+" / ", true)
+			}
+		}
+	}
+	if parent == nil {
+		walk("", "", true)
+		return out
+	}
+	prefix := ""
+	for _, p := range s.path(*parent) {
+		prefix += p.Name + " / "
+	}
+	walk(*parent, prefix, false)
 	return out
 }
 
@@ -322,6 +412,13 @@ func (s *Store) Category(slug string) (Category, error) {
 		return *c, nil
 	}
 	return Category{}, ErrNotFound
+}
+
+// Path returns the categories from the root down to slug (breadcrumb).
+func (s *Store) Path(slug string) []Category {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.path(slug)
 }
 
 func (s *Store) UncategorizedCount() int {
@@ -336,8 +433,26 @@ func (s *Store) UncategorizedCount() int {
 	return n
 }
 
+// checkParent validates that slug can be placed under parent. Lock must be held.
+func (s *Store) checkParent(slug, parent string) error {
+	if parent == "" {
+		return nil
+	}
+	if s.category(parent) == nil {
+		return errors.New("unknown parent category: " + parent)
+	}
+	for _, p := range s.path(parent) {
+		if p.Slug == slug {
+			return errors.New("a category cannot be placed inside itself or its descendants")
+		}
+	}
+	return nil
+}
+
+// PutCategory creates or fully replaces a category.
 func (s *Store) PutCategory(c Category) (Category, error) {
 	c.Name = strings.TrimSpace(c.Name)
+	c.Parent = strings.TrimSpace(c.Parent)
 	if c.Slug == "" {
 		c.Slug = Slugify(c.Name)
 	}
@@ -349,6 +464,9 @@ func (s *Store) PutCategory(c Category) (Category, error) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if err := s.checkParent(c.Slug, c.Parent); err != nil {
+		return c, err
+	}
 	if existing := s.category(c.Slug); existing != nil {
 		*existing = c
 	} else {
@@ -357,16 +475,53 @@ func (s *Store) PutCategory(c Category) (Category, error) {
 	return c, s.save()
 }
 
-// DeleteCategory removes a category; its books become uncategorized.
+// PatchCategory changes only the given fields (e.g. moves it under a new parent).
+func (s *Store) PatchCategory(slug string, p CategoryPatch) (Category, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c := s.category(slug)
+	if c == nil {
+		return Category{}, ErrNotFound
+	}
+	n := *c
+	if p.Name != nil {
+		n.Name = strings.TrimSpace(*p.Name)
+	}
+	if p.Description != nil {
+		n.Description = strings.TrimSpace(*p.Description)
+	}
+	if p.Parent != nil {
+		n.Parent = strings.TrimSpace(*p.Parent)
+	}
+	if p.Order != nil {
+		n.Order = *p.Order
+	}
+	if n.Name == "" {
+		return n, errors.New("name cannot be empty")
+	}
+	if err := s.checkParent(n.Slug, n.Parent); err != nil {
+		return n, err
+	}
+	*c = n
+	return n, s.save()
+}
+
+// DeleteCategory removes a category; its books and sub-categories move up to
+// its parent (or become uncategorized / roots).
 func (s *Store) DeleteCategory(slug string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for i, c := range s.lib.Categories {
 		if c.Slug == slug {
 			s.lib.Categories = append(s.lib.Categories[:i], s.lib.Categories[i+1:]...)
+			for j := range s.lib.Categories {
+				if s.lib.Categories[j].Parent == slug {
+					s.lib.Categories[j].Parent = c.Parent
+				}
+			}
 			for _, b := range s.lib.Books {
 				if b.Category == slug {
-					b.Category = ""
+					b.Category = c.Parent
 				}
 			}
 			return s.save()

@@ -19,20 +19,25 @@ K="X-API-Key: $MYBOOKS_API_KEY"; U="$MYBOOKS_URL"
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/api/books?q=&category=&tag=&sort=title\|author\|added` | `category=-` = uncategorized |
+| GET | `/api/books?q=&category=&recursive=1&tag=&sort=title\|author\|added` | `category=-` = uncategorized; `recursive=1` includes sub-categories |
 | POST | `/api/books` | multipart: `file` (PDF/EPUB, required), `cover` (JPEG/PNG), `metadata` (JSON). 409 + existing book if same sha256. PDF without cover → first page auto-rendered (`?autocover=0` to skip) |
-| GET/PATCH/DELETE | `/api/books/{id}` | PATCH JSON: any of `title author description category tags series series_index language year publisher isbn` |
+| GET/PATCH/DELETE | `/api/books/{id}` | PATCH JSON: any of `title author description category tags series series_index language year publisher isbn pages` |
 | GET/PUT | `/api/books/{id}/file` | PUT: multipart `file` or raw body |
 | GET/PUT/DELETE | `/api/books/{id}/cover` | PUT: multipart `cover` or raw body |
 | POST | `/api/books/{id}/cover/generate` | re-render first PDF page |
-| GET | `/api/categories` | with book counts |
-| POST | `/api/categories` | `{"name","slug"?,"description"?,"order"?}`; slug derived from name |
-| PUT/DELETE | `/api/categories/{slug}` | delete leaves books uncategorized |
+| GET | `/api/categories` | whole tree, depth-first, each with `parent`, `path` ("Scacchi / Finali"), `count` (direct) and `total` (with sub-categories) |
+| POST | `/api/categories` | `{"name","slug"?,"parent"?,"description"?,"order"?}`; slug derived from name, globally unique |
+| PUT | `/api/categories/{slug}` | full replace (omitting `parent` makes it a root) |
+| PATCH | `/api/categories/{slug}` | partial update, e.g. `{"parent":"informatica"}` to move it; cycles are rejected |
+| DELETE | `/api/categories/{slug}` | its books and sub-categories move up to its parent |
 
-A book's `category` must be an existing slug — create the category first.
+Categories are a tree: top-level ones are broad subjects (Scacchi, Informatica…), with topics below.
+A book's `category` must be an existing slug — create the category first. Prefer putting books in the
+most specific (leaf) category. Page count is filled in automatically for PDFs (pdfinfo).
 
 ```sh
-curl -fsS -H "$K" -X POST "$U/api/categories" -d '{"name":"Fantascienza"}'
+curl -fsS -H "$K" -X POST "$U/api/categories" -d '{"name":"Narrativa"}'
+curl -fsS -H "$K" -X POST "$U/api/categories" -d '{"name":"Fantascienza","parent":"narrativa"}'
 curl -fsS -H "$K" -F file=@book.pdf \
   -F 'metadata={"title":"Dune","author":"Frank Herbert","category":"fantascienza","year":1965,"tags":["classici"]}' \
   "$U/api/books"

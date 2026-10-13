@@ -35,3 +35,4 @@ table.details td { padding: 6px 4px; }
 .sort { font-size: 18px; }
 #login { max-width: 600px; margin: 80px auto; padding: 0 16px; text-align: center; }
 #login input { width: 90%; margin-bottom: 14px; }
+.crumbs { font-size: 18px; margin: 10px 0 0; }

@@ -1,9 +1,14 @@
 {{template "head" .}}
+{{if .Crumbs}}<p class="crumbs">{{template "crumbs" .Crumbs}}</p>{{end}}
 <h2>{{.Title}} <span class="meta">({{.Count}})</span></h2>
-<p class="sort">Ordina: <a href="?sort=title{{if .Query}}&amp;q={{.Query}}{{end}}">titolo</a> · <a href="?sort=author{{if .Query}}&amp;q={{.Query}}{{end}}">autore</a> · <a href="?sort=added{{if .Query}}&amp;q={{.Query}}{{end}}">recenti</a></p>
+{{if .Subcats}}
+{{template "cats" .Subcats}}
+<p class="sort"><a href="/books?category={{.Slug}}&amp;recursive=1">Tutti i libri di {{.Title}} e sottocategorie »</a></p>
+{{end}}
+{{if .Books}}<p class="sort">Ordina: <a href="{{.SortURL}}title">titolo</a> · <a href="{{.SortURL}}author">autore</a> · <a href="{{.SortURL}}added">recenti</a></p>{{end}}
 {{if .Books}}
 {{template "booklist" .Books}}
-{{else}}
+{{else if not .Subcats}}
 <p class="empty">Nessun libro.</p>
 {{end}}
 {{if gt .Pages 1}}

@@ -29,9 +29,19 @@
   <td class="info">
     <a class="title" href="/b/{{.ID}}">{{.Title}}</a>
     {{if .Author}}<div class="author">{{.Author}}</div>{{end}}
-    {{if .Series}}<div class="meta">{{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}</div>{{end}}
+    <div class="meta">{{if .Pages}}{{.Pages}} pag.{{else}}{{.Format}}{{end}}{{if .Series}} · {{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}{{end}}</div>
   </td>
 </tr>
 {{end}}
 </table>
 {{end}}
+
+{{define "cats"}}
+<table class="cats">
+{{range .}}
+<tr><td><a href="/c/{{.Slug}}">{{.Name}}</a>{{if .Description}}<div class="meta">{{.Description}}</div>{{end}}</td><td class="count">{{.Total}}</td></tr>
+{{end}}
+</table>
+{{end}}
+
+{{define "crumbs"}}{{range .}}<a href="/c/{{.Slug}}">{{.Name}}</a> › {{end}}{{end}}

@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -64,6 +65,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /api/categories", a.requireAPI(a.apiListCategories))
 	mux.HandleFunc("POST /api/categories", a.requireKey(a.apiPutCategory))
 	mux.HandleFunc("PUT /api/categories/{slug}", a.requireKey(a.apiPutCategory))
+	mux.HandleFunc("PATCH /api/categories/{slug}", a.requireKey(a.apiPatchCategory))
 	mux.HandleFunc("DELETE /api/categories/{slug}", a.requireKey(a.apiDeleteCategory))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
@@ -109,7 +111,8 @@ func writeStoreError(w http.ResponseWriter, err error) {
 
 func (a *App) apiListBooks(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	books := a.store.List(Query{Category: q.Get("category"), Text: q.Get("q"), Tag: q.Get("tag"), Sort: q.Get("sort")})
+	books := a.store.List(Query{Category: q.Get("category"), Recursive: q.Get("recursive") == "1",
+		Text: q.Get("q"), Tag: q.Get("tag"), Sort: q.Get("sort")})
 	if books == nil {
 		books = []*Book{}
 	}
@@ -288,6 +291,9 @@ func (a *App) apiCreateBook(w http.ResponseWriter, r *http.Request) {
 	if b.Title == "" || b.Title == "." {
 		b.Title = "Untitled"
 	}
+	if b.Format == "pdf" {
+		b.Pages = pdfPages(r.Context(), file.path)
+	}
 	if err := patch.Apply(b); err != nil {
 		writeError(w, 400, err.Error())
 		return
@@ -374,8 +380,12 @@ func (a *App) apiPutFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 500, err.Error())
 		return
 	}
+	pages := 0
+	if format == "pdf" {
+		pages = pdfPages(r.Context(), a.store.BookPath(nb))
+	}
 	b, err := a.store.Update(id, func(b *Book) error {
-		b.Format, b.Size, b.SHA256 = format, u.size, u.sha
+		b.Format, b.Size, b.SHA256, b.Pages = format, u.size, u.sha, pages
 		if u.name != "" && u.name != "." {
 			b.FileName = u.name
 		}
@@ -481,6 +491,35 @@ func (a *App) apiGenerateCover(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, b)
 }
 
+// pdfPages returns the page count reported by pdfinfo, or 0 if unknown.
+func pdfPages(ctx context.Context, path string) int {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, "pdfinfo", path).Output()
+	if err != nil {
+		return 0
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		if v, ok := strings.CutPrefix(line, "Pages:"); ok {
+			n, _ := strconv.Atoi(strings.TrimSpace(v))
+			return n
+		}
+	}
+	return 0
+}
+
+// BackfillPages fills in the page count of PDFs uploaded before it was tracked.
+func (a *App) BackfillPages() {
+	for _, b := range a.store.List(Query{}) {
+		if b.Format != "pdf" || b.Pages > 0 {
+			continue
+		}
+		if n := pdfPages(context.Background(), a.store.BookPath(b)); n > 0 {
+			a.store.Update(b.ID, func(b *Book) error { b.Pages = n; return nil })
+		}
+	}
+}
+
 // ---- categories ----
 
 func (a *App) apiListCategories(w http.ResponseWriter, r *http.Request) {
@@ -500,6 +539,20 @@ func (a *App) apiPutCategory(w http.ResponseWriter, r *http.Request) {
 		c.Slug = slug
 	}
 	c, err := a.store.PutCategory(c)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, 200, c)
+}
+
+func (a *App) apiPatchCategory(w http.ResponseWriter, r *http.Request) {
+	var p CategoryPatch
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		writeError(w, 400, "invalid JSON: "+err.Error())
+		return
+	}
+	c, err := a.store.PatchCategory(r.PathValue("slug"), p)
 	if err != nil {
 		writeStoreError(w, err)
 		return

@@ -63,9 +63,12 @@ func main() {
 		log.Fatalf("open store: %v", err)
 	}
 
+	app := NewApp(cfg, store)
+	go app.BackfillPages()
+
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           logRequests(NewApp(cfg, store).Routes()),
+		Handler:           logRequests(app.Routes()),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}

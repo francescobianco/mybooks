@@ -79,7 +79,7 @@ func (a *App) homePage(w http.ResponseWriter, r *http.Request) {
 	}
 	render(w, "home.html", map[string]any{
 		"Title":         "Libreria",
-		"Categories":    a.store.Categories(),
+		"Categories":    a.store.Children(""),
 		"Uncategorized": a.store.UncategorizedCount(),
 		"Recent":        recent,
 		"Total":         total,
@@ -89,16 +89,28 @@ func (a *App) homePage(w http.ResponseWriter, r *http.Request) {
 // listPage handles /books (all, search, uncategorized) and /c/{slug}.
 func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	query := Query{Text: q.Get("q"), Tag: q.Get("tag"), Sort: q.Get("sort"), Category: q.Get("category")}
+	query := Query{Text: q.Get("q"), Tag: q.Get("tag"), Sort: q.Get("sort"), Category: q.Get("category"),
+		Recursive: q.Get("recursive") == "1"}
 	title := "Tutti i libri"
+	var crumbs []Category
+	var subcats []CategoryCount
 	if slug := r.PathValue("slug"); slug != "" {
-		c, err := a.store.Category(slug)
+		query.Category = slug
+	}
+	if query.Category != "" && query.Category != "-" {
+		c, err := a.store.Category(query.Category)
 		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
-		query.Category = slug
 		title = c.Name
+		crumbs = a.store.Path(c.Slug)
+		crumbs = crumbs[:len(crumbs)-1]
+		if query.Recursive {
+			title = "Tutto in " + c.Name
+		} else {
+			subcats = a.store.Children(c.Slug)
+		}
 	} else if query.Category == "-" {
 		title = "Senza categoria"
 	}
@@ -132,14 +144,28 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 		v.Set("page", strconv.Itoa(p))
 		return r.URL.Path + "?" + v.Encode()
 	}
+	sortQ := url.Values{}
+	for k := range q {
+		if k != "sort" && k != "page" {
+			sortQ.Set(k, q.Get(k))
+		}
+	}
+	sortURL := r.URL.Path + "?"
+	if len(sortQ) > 0 {
+		sortURL += sortQ.Encode() + "&"
+	}
 	data := map[string]any{
-		"Title": title,
-		"Books": books[start:end],
-		"Count": len(books),
-		"Page":  page,
-		"Pages": pages,
-		"Query": query.Text,
-		"Sort":  query.Sort,
+		"SortURL": sortURL + "sort=",
+		"Crumbs":  crumbs,
+		"Subcats": subcats,
+		"Slug":    query.Category,
+		"Title":   title,
+		"Books":   books[start:end],
+		"Count":   len(books),
+		"Page":    page,
+		"Pages":   pages,
+		"Query":   query.Text,
+		"Sort":    query.Sort,
 	}
 	if page > 1 {
 		data["Prev"] = pageURL(page - 1)
@@ -158,9 +184,7 @@ func (a *App) bookPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := map[string]any{"Title": b.Title, "Book": b}
 	if b.Category != "" {
-		if c, err := a.store.Category(b.Category); err == nil {
-			data["Category"] = c
-		}
+		data["CategoryPath"] = a.store.Path(b.Category)
 	}
 	render(w, "book.html", data)
 }

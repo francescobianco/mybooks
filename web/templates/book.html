@@ -4,11 +4,13 @@
   {{if .CoverExt}}<img class="cover" src="{{coverURL .}}" alt="">{{end}}
   <h1>{{.Title}}</h1>
   {{if .Author}}<p class="author">{{.Author}}</p>{{end}}
+  <p class="meta">{{if .Pages}}{{.Pages}} pag. · {{end}}{{.Format}}</p>
   {{if .Series}}<p class="meta">{{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}</p>{{end}}
   <p><a class="button" href="/b/{{.ID}}/download">Scarica {{.Format}} ({{size .Size}})</a></p>
   {{if .Description}}<div class="desc">{{.Description}}</div>{{end}}
   <table class="details">
-    {{if $.Category}}<tr><th>Categoria</th><td><a href="/c/{{$.Category.Slug}}">{{$.Category.Name}}</a></td></tr>{{end}}
+    {{if $.CategoryPath}}<tr><th>Categoria</th><td>{{range $i, $c := $.CategoryPath}}{{if $i}} › {{end}}<a href="/c/{{$c.Slug}}">{{$c.Name}}</a>{{end}}</td></tr>{{end}}
+    {{if .Pages}}<tr><th>Pagine</th><td>{{.Pages}}</td></tr>{{end}}
     {{if .Year}}<tr><th>Anno</th><td>{{.Year}}</td></tr>{{end}}
     {{if .Publisher}}<tr><th>Editore</th><td>{{.Publisher}}</td></tr>{{end}}
     {{if .Language}}<tr><th>Lingua</th><td>{{.Language}}</td></tr>{{end}}
