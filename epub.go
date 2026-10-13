@@ -97,6 +97,9 @@ func epubCover(file string) ([]byte, string, error) {
 			candidates = append(candidates, it.Href)
 		}
 	}
+	if coverID != "" { // non-standard: <meta name="cover"> holding a path instead of an id
+		candidates = append(candidates, coverID)
+	}
 	for _, it := range pkg.Items { // heuristic
 		if strings.HasPrefix(it.MediaType, "image/") &&
 			(strings.Contains(strings.ToLower(it.ID), "cover") || strings.Contains(strings.ToLower(it.Href), "cover")) {
@@ -150,4 +153,19 @@ func epubPages(file string) int {
 		return 0
 	}
 	return (chars + charsPerPage - 1) / charsPerPage
+}
+
+// isEPUB reports whether file is a zip containing an EPUB container.
+func isEPUB(file string) bool {
+	z, err := zip.OpenReader(file)
+	if err != nil {
+		return false
+	}
+	defer z.Close()
+	for _, f := range z.File {
+		if f.Name == "META-INF/container.xml" {
+			return true
+		}
+	}
+	return false
 }

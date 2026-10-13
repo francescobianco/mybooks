@@ -203,7 +203,7 @@ func bookFormat(u *upload) (string, error) {
 	switch {
 	case bytes.HasPrefix(u.head, []byte("%PDF")):
 		return "pdf", nil
-	case bytes.HasPrefix(u.head, []byte("PK")) && bytes.Contains(u.head, []byte("application/epub+zip")):
+	case bytes.HasPrefix(u.head, []byte("PK")) && (bytes.Contains(u.head, []byte("application/epub+zip")) || isEPUB(u.path)):
 		return "epub", nil
 	}
 	return "", errors.New("unsupported file: only PDF and EPUB are accepted")
