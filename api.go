@@ -40,6 +40,8 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /logout", a.logout)
 	mux.HandleFunc("GET /logout", a.logout)
 	mux.HandleFunc("GET /static/", serveStatic)
+	mux.HandleFunc("GET /favicon.ico", serveRootStatic("favicon.ico"))
+	mux.HandleFunc("GET /apple-touch-icon.png", serveRootStatic("apple-touch-icon.png"))
 	mux.HandleFunc("GET /{$}", a.requireWeb(a.homePage))
 	mux.HandleFunc("GET /books", a.requireWeb(a.listPage))
 	mux.HandleFunc("GET /c/{slug}", a.requireWeb(a.listPage))

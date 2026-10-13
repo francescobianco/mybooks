@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"html/template"
@@ -95,6 +96,20 @@ func nonEmpty(cats []CategoryCount, lang string) []CategoryCount {
 		}
 	}
 	return out
+}
+
+// serveRootStatic serves an embedded static file at a root path browsers
+// request on their own (favicon, touch icon).
+func serveRootStatic(name string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := staticFS.ReadFile("web/static/" + name)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Cache-Control", "public, max-age=604800")
+		http.ServeContent(w, r, name, time.Time{}, bytes.NewReader(data))
+	}
 }
 
 func render(w http.ResponseWriter, name string, data map[string]any) {
