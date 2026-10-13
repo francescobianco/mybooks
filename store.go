@@ -451,6 +451,7 @@ type LanguageCount struct {
 var languageNames = map[string]string{
 	"it": "Italiano", "en": "English", "es": "Español", "fr": "Français",
 	"de": "Deutsch", "pt": "Português", "ru": "Русский", "nl": "Nederlands",
+	"la": "Latino", "grc": "Ἑλληνική", "scn": "Sicilianu",
 }
 
 // Languages lists the languages present in the library, most books first.
