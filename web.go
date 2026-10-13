@@ -180,6 +180,13 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	books := a.store.List(query)
+	// The heading counts sub-categories too; the list shows direct books only.
+	total := len(books)
+	if len(subcats) > 0 {
+		rq := query
+		rq.Recursive = true
+		total = len(a.store.List(rq))
+	}
 	size := a.cfg.PageSize
 	pages := (len(books) + size - 1) / size
 	page, _ := strconv.Atoi(q.Get("page"))
@@ -221,6 +228,7 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 		"Title":   title,
 		"Books":   books[start:end],
 		"Count":   len(books),
+		"Total":   total,
 		"Page":    page,
 		"Pages":   pages,
 		"Query":   query.Text,
