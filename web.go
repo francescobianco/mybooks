@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -37,6 +39,62 @@ func serveStatic(w http.ResponseWriter, r *http.Request) {
 	sub, _ := fs.Sub(staticFS, "web")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	http.FileServer(http.FS(sub)).ServeHTTP(w, r)
+}
+
+const langCookie = "mybooks_lang"
+
+var langRe = regexp.MustCompile(`^[a-z]{2,3}$`)
+
+// lang returns the language filter chosen on this device ("" = all).
+func (a *App) lang(r *http.Request) string {
+	if c, err := r.Cookie(langCookie); err == nil && langRe.MatchString(c.Value) {
+		return c.Value
+	}
+	return ""
+}
+
+// setLang stores the language filter in a cookie and goes back to `next`.
+func (a *App) setLang(w http.ResponseWriter, r *http.Request) {
+	l := r.URL.Query().Get("l")
+	if langRe.MatchString(l) {
+		http.SetCookie(w, &http.Cookie{Name: langCookie, Value: l, Path: "/", MaxAge: 5 * 365 * 24 * 3600, SameSite: http.SameSiteLaxMode})
+	} else {
+		http.SetCookie(w, &http.Cookie{Name: langCookie, Value: "", Path: "/", MaxAge: -1})
+	}
+	next := r.URL.Query().Get("next")
+	if !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") {
+		next = "/"
+	}
+	http.Redirect(w, r, next, http.StatusSeeOther)
+}
+
+// page renders a template adding what the layout needs (language bar).
+func (a *App) page(w http.ResponseWriter, r *http.Request, name string, data map[string]any) {
+	data["Lang"] = a.lang(r)
+	data["Langs"] = a.store.Languages()
+	// current URL without the page number: switching language restarts from page 1
+	q := r.URL.Query()
+	q.Del("page")
+	next := r.URL.Path
+	if len(q) > 0 {
+		next += "?" + q.Encode()
+	}
+	data["LangNext"] = next
+	render(w, name, data)
+}
+
+// nonEmpty hides categories without books in the selected language.
+func nonEmpty(cats []CategoryCount, lang string) []CategoryCount {
+	if lang == "" {
+		return cats
+	}
+	var out []CategoryCount
+	for _, c := range cats {
+		if c.Total > 0 {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 func render(w http.ResponseWriter, name string, data map[string]any) {
@@ -72,15 +130,16 @@ func (a *App) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) homePage(w http.ResponseWriter, r *http.Request) {
-	recent := a.store.List(Query{Sort: "added"})
+	lang := a.lang(r)
+	recent := a.store.List(Query{Sort: "added", Language: lang})
 	total := len(recent)
 	if len(recent) > 6 {
 		recent = recent[:6]
 	}
-	render(w, "home.html", map[string]any{
+	a.page(w, r, "home.html", map[string]any{
 		"Title":         "Libreria",
-		"Categories":    a.store.Children(""),
-		"Uncategorized": a.store.UncategorizedCount(),
+		"Categories":    nonEmpty(a.store.Children("", lang), lang),
+		"Uncategorized": a.store.UncategorizedCount(lang),
 		"Recent":        recent,
 		"Total":         total,
 	})
@@ -90,7 +149,7 @@ func (a *App) homePage(w http.ResponseWriter, r *http.Request) {
 func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	query := Query{Text: q.Get("q"), Tag: q.Get("tag"), Sort: q.Get("sort"), Category: q.Get("category"),
-		Recursive: q.Get("recursive") == "1"}
+		Recursive: q.Get("recursive") == "1", Language: a.lang(r)}
 	title := "Tutti i libri"
 	var crumbs []Category
 	var subcats []CategoryCount
@@ -109,7 +168,7 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 		if query.Recursive {
 			title = "Tutto in " + c.Name
 		} else {
-			subcats = a.store.Children(c.Slug)
+			subcats = nonEmpty(a.store.Children(c.Slug, query.Language), query.Language)
 		}
 	} else if query.Category == "-" {
 		title = "Senza categoria"
@@ -173,7 +232,7 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 	if page < pages {
 		data["Next"] = pageURL(page + 1)
 	}
-	render(w, "list.html", data)
+	a.page(w, r, "list.html", data)
 }
 
 func (a *App) bookPage(w http.ResponseWriter, r *http.Request) {
@@ -186,5 +245,5 @@ func (a *App) bookPage(w http.ResponseWriter, r *http.Request) {
 	if b.Category != "" {
 		data["CategoryPath"] = a.store.Path(b.Category)
 	}
-	render(w, "book.html", data)
+	a.page(w, r, "book.html", data)
 }

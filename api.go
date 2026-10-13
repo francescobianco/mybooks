@@ -44,6 +44,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /books", a.requireWeb(a.listPage))
 	mux.HandleFunc("GET /c/{slug}", a.requireWeb(a.listPage))
 	mux.HandleFunc("GET /b/{id}", a.requireWeb(a.bookPage))
+	mux.HandleFunc("GET /lang", a.requireWeb(a.setLang))
 	mux.HandleFunc("GET /b/{id}/download", a.requireWeb(a.download))
 	mux.HandleFunc("GET /b/{id}/cover", a.requireWeb(a.cover))
 
@@ -111,7 +112,7 @@ func writeStoreError(w http.ResponseWriter, err error) {
 
 func (a *App) apiListBooks(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	books := a.store.List(Query{Category: q.Get("category"), Recursive: q.Get("recursive") == "1",
+	books := a.store.List(Query{Category: q.Get("category"), Recursive: q.Get("recursive") == "1", Language: q.Get("lang"),
 		Text: q.Get("q"), Tag: q.Get("tag"), Sort: q.Get("sort")})
 	if books == nil {
 		books = []*Book{}
@@ -523,9 +524,11 @@ func (a *App) BackfillPages() {
 // ---- categories ----
 
 func (a *App) apiListCategories(w http.ResponseWriter, r *http.Request) {
+	lang := r.URL.Query().Get("lang")
 	writeJSON(w, 200, map[string]any{
-		"categories":    a.store.Categories(),
-		"uncategorized": a.store.UncategorizedCount(),
+		"categories":    a.store.Categories(lang),
+		"uncategorized": a.store.UncategorizedCount(lang),
+		"languages":     a.store.Languages(),
 	})
 }
 

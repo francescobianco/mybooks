@@ -10,6 +10,10 @@
 <div id="top">
   <a class="brand" href="/">mybooks</a>
   <form class="search" action="/books" method="get"><input type="text" name="q" value="{{.Query}}" placeholder="Cerca titolo, autore…"><button type="submit">Cerca</button></form>
+  {{if gt (len .Langs) 1}}<div class="langs">Lingua:
+    {{if .Lang}}<a href="/lang?next={{.LangNext}}">Tutte</a>{{else}}<b>Tutte</b>{{end}}
+    {{range .Langs}} · {{if eq .Code $.Lang}}<b>{{.Name}}</b>{{else}}<a href="/lang?l={{.Code}}&amp;next={{$.LangNext}}">{{.Name}}</a>{{end}}{{end}}
+  </div>{{end}}
 </div>
 <div id="main">
 {{end}}

@@ -35,7 +35,7 @@ func TestCategoryTree(t *testing.T) {
 		}
 	}
 
-	all := s.Categories()
+	all := s.Categories("")
 	var paths []string
 	for _, c := range all {
 		paths = append(paths, c.Path)
@@ -58,7 +58,7 @@ func TestCategoryTree(t *testing.T) {
 	if n := len(s.List(Query{Category: "finali"})); n != 1 {
 		t.Errorf("direct finali = %d books", n)
 	}
-	if kids := s.Children(""); len(kids) != 2 {
+	if kids := s.Children("", ""); len(kids) != 2 {
 		t.Errorf("roots = %v", kids)
 	}
 

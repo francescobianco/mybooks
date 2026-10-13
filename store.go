@@ -167,6 +167,7 @@ func (s *Store) FindBySHA(sha string) *Book {
 type Query struct {
 	Category  string // slug; "-" means uncategorized
 	Recursive bool   // include books of sub-categories
+	Language  string // ISO code, "" for all
 	Text      string
 	Tag       string
 	Sort      string // "title" (default), "added", "author"
@@ -186,6 +187,9 @@ func (s *Store) List(q Query) []*Book {
 			continue
 		}
 		if q.Category != "" && q.Category != "-" && !cats[b.Category] {
+			continue
+		}
+		if q.Language != "" && !strings.EqualFold(b.Language, q.Language) {
 			continue
 		}
 		if q.Tag != "" && !containsFold(b.Tags, q.Tag) {
@@ -342,26 +346,28 @@ func (s *Store) path(slug string) []Category {
 }
 
 // Categories returns all categories, sorted depth-first (parents before
-// their children), with book counts.
-func (s *Store) Categories() []CategoryCount {
+// their children), with counts of the books in lang ("" for all).
+func (s *Store) Categories(lang string) []CategoryCount {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.categories(nil)
+	return s.categories(nil, lang)
 }
 
 // Children returns the direct sub-categories of parent ("" for roots).
-func (s *Store) Children(parent string) []CategoryCount {
+func (s *Store) Children(parent, lang string) []CategoryCount {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.categories(&parent)
+	return s.categories(&parent, lang)
 }
 
 // categories lists the whole tree depth-first, or only the direct children
 // of *parent when parent is not nil. Read lock must be held.
-func (s *Store) categories(parent *string) []CategoryCount {
+func (s *Store) categories(parent *string, lang string) []CategoryCount {
 	counts := map[string]int{}
 	for _, b := range s.lib.Books {
-		counts[b.Category]++
+		if lang == "" || strings.EqualFold(b.Language, lang) {
+			counts[b.Category]++
+		}
 	}
 	byParent := map[string][]Category{}
 	for _, c := range s.lib.Categories {
@@ -421,16 +427,54 @@ func (s *Store) Path(slug string) []Category {
 	return s.path(slug)
 }
 
-func (s *Store) UncategorizedCount() int {
+func (s *Store) UncategorizedCount(lang string) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	n := 0
 	for _, b := range s.lib.Books {
-		if b.Category == "" {
+		if b.Category == "" && (lang == "" || strings.EqualFold(b.Language, lang)) {
 			n++
 		}
 	}
 	return n
+}
+
+type LanguageCount struct {
+	Code  string `json:"code"`
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
+var languageNames = map[string]string{
+	"it": "Italiano", "en": "English", "es": "Español", "fr": "Français",
+	"de": "Deutsch", "pt": "Português", "ru": "Русский", "nl": "Nederlands",
+}
+
+// Languages lists the languages present in the library, most books first.
+func (s *Store) Languages() []LanguageCount {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	counts := map[string]int{}
+	for _, b := range s.lib.Books {
+		if b.Language != "" {
+			counts[strings.ToLower(b.Language)]++
+		}
+	}
+	out := make([]LanguageCount, 0, len(counts))
+	for code, n := range counts {
+		name := languageNames[code]
+		if name == "" {
+			name = strings.ToUpper(code)
+		}
+		out = append(out, LanguageCount{code, name, n})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Count != out[j].Count {
+			return out[i].Count > out[j].Count
+		}
+		return out[i].Code < out[j].Code
+	})
+	return out
 }
 
 // checkParent validates that slug can be placed under parent. Lock must be held.

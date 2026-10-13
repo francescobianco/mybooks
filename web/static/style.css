@@ -36,3 +36,6 @@ table.details td { padding: 6px 4px; }
 #login { max-width: 600px; margin: 80px auto; padding: 0 16px; text-align: center; }
 #login input { width: 90%; margin-bottom: 14px; }
 .crumbs { font-size: 18px; margin: 10px 0 0; }
+#top .langs { margin-top: 10px; font-size: 20px; }
+#top .langs a, #top .langs b { padding: 4px 2px; }
+#top .langs b { border-bottom: 3px solid #000; }
