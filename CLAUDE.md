@@ -43,11 +43,14 @@ Prefer EPUB over PDF when both exist: it reflows on the Kobo.
 curl -fsS -H "$K" -X POST "$U/api/categories" -d '{"name":"Narrativa"}'
 curl -fsS -H "$K" -X POST "$U/api/categories" -d '{"name":"Fantascienza","parent":"narrativa"}'
 curl -fsS -H "$K" -F file=@book.pdf \
-  -F 'metadata={"title":"Dune","author":"Frank Herbert","category":"fantascienza","year":1965,"tags":["classici"]}' \
+  --form-string 'metadata={"title":"Dune","author":"Frank Herbert","category":"fantascienza","year":1965,"tags":["classici"]}' \
   "$U/api/books"
 curl -fsS -H "$K" -X PATCH "$U/api/books/ID" -d '{"series":"Dune","series_index":1}'
 curl -fsS -H "$K" -X PUT --data-binary @cover.jpg "$U/api/books/ID/cover"
 ```
+
+Pass `metadata` with `--form-string`, not `-F`: curl treats `;` inside a `-F` value as an option
+separator and silently truncates the JSON ("metadata: unexpected EOF").
 
 Good covers: portrait JPEG ~600–800px wide, high contrast (e-ink is grayscale).
 To pick a better page than the first: `pdftoppm -jpeg -f N -l N -scale-to 800 -singlefile book.pdf cover`.
