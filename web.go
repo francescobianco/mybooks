@@ -84,11 +84,8 @@ func (a *App) page(w http.ResponseWriter, r *http.Request, name string, data map
 	render(w, name, data)
 }
 
-// nonEmpty hides categories without books in the selected language.
+// nonEmpty hides categories without books (in the selected language, if any).
 func nonEmpty(cats []CategoryCount, lang string) []CategoryCount {
-	if lang == "" {
-		return cats
-	}
 	var out []CategoryCount
 	for _, c := range cats {
 		if c.Total > 0 {
