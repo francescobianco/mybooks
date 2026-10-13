@@ -1,6 +1,6 @@
 {{template "head" .}}
-{{if .Crumbs}}<p class="crumbs">{{template "crumbs" .Crumbs}}</p>{{end}}
-<h2>{{.Title}} <span class="meta">({{.Total}})</span></h2>
+{{if .Back}}<p class="crumbs"><a href="/">Home</a> › {{template "crumbs" .Crumbs}}</p>{{end}}
+<h2>{{if .Back}}<a class="back" href="{{.Back}}">«</a> {{end}}{{.Title}} <span class="meta">({{.Total}})</span></h2>
 {{if .Subcats}}
 {{template "cats" .Subcats}}
 <p class="sort"><a href="/books?category={{.Slug}}&amp;recursive=1">Tutti i libri di {{.Title}} e sottocategorie »</a></p>

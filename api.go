@@ -292,9 +292,7 @@ func (a *App) apiCreateBook(w http.ResponseWriter, r *http.Request) {
 	if b.Title == "" || b.Title == "." {
 		b.Title = "Untitled"
 	}
-	if b.Format == "pdf" {
-		b.Pages = pdfPages(r.Context(), file.path)
-	}
+	b.Pages, b.PagesEstimated = bookPages(r.Context(), b.Format, file.path)
 	if err := patch.Apply(b); err != nil {
 		writeError(w, 400, err.Error())
 		return
@@ -316,7 +314,7 @@ func (a *App) apiCreateBook(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	if b.CoverExt == "" && b.Format == "pdf" && r.URL.Query().Get("autocover") != "0" {
+	if b.CoverExt == "" && r.URL.Query().Get("autocover") != "0" {
 		if nb, err := a.generateCover(r.Context(), b.ID); err == nil {
 			b = nb
 		} else {
@@ -381,12 +379,9 @@ func (a *App) apiPutFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 500, err.Error())
 		return
 	}
-	pages := 0
-	if format == "pdf" {
-		pages = pdfPages(r.Context(), a.store.BookPath(nb))
-	}
+	pages, estimated := bookPages(r.Context(), format, a.store.BookPath(nb))
 	b, err := a.store.Update(id, func(b *Book) error {
-		b.Format, b.Size, b.SHA256, b.Pages = format, u.size, u.sha, pages
+		b.Format, b.Size, b.SHA256, b.Pages, b.PagesEstimated = format, u.size, u.sha, pages, estimated
 		if u.name != "" && u.name != "." {
 			b.FileName = u.name
 		}
@@ -459,14 +454,23 @@ func (a *App) apiDeleteCover(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, b)
 }
 
-// generateCover renders the first page of a PDF with pdftoppm (poppler-utils).
+// generateCover extracts the cover embedded in an EPUB, or renders the first
+// page of a PDF with pdftoppm (poppler-utils).
 func (a *App) generateCover(ctx context.Context, id string) (*Book, error) {
 	b, err := a.store.Get(id)
 	if err != nil {
 		return nil, err
 	}
-	if b.Format != "pdf" {
-		return nil, errors.New("cover generation is only available for PDF")
+	if b.Format == "epub" {
+		data, ext, err := epubCover(a.store.BookPath(b))
+		if err != nil {
+			return nil, err
+		}
+		tmp := filepath.Join(a.store.TmpDir(), "cover-"+b.ID+"."+ext)
+		if err := os.WriteFile(tmp, data, 0o640); err != nil {
+			return nil, err
+		}
+		return a.setCover(id, tmp, ext)
 	}
 	if _, err := exec.LookPath("pdftoppm"); err != nil {
 		return nil, errors.New("pdftoppm not installed on server")
@@ -509,14 +513,22 @@ func pdfPages(ctx context.Context, path string) int {
 	return 0
 }
 
-// BackfillPages fills in the page count of PDFs uploaded before it was tracked.
+// bookPages returns the page count: exact for PDF, estimated for EPUB.
+func bookPages(ctx context.Context, format, path string) (pages int, estimated bool) {
+	if format == "epub" {
+		return epubPages(path), true
+	}
+	return pdfPages(ctx, path), false
+}
+
+// BackfillPages fills in the page count of books uploaded before it was tracked.
 func (a *App) BackfillPages() {
 	for _, b := range a.store.List(Query{}) {
-		if b.Format != "pdf" || b.Pages > 0 {
+		if b.Pages > 0 {
 			continue
 		}
-		if n := pdfPages(context.Background(), a.store.BookPath(b)); n > 0 {
-			a.store.Update(b.ID, func(b *Book) error { b.Pages = n; return nil })
+		if n, est := bookPages(context.Background(), b.Format, a.store.BookPath(b)); n > 0 {
+			a.store.Update(b.ID, func(b *Book) error { b.Pages, b.PagesEstimated = n, est; return nil })
 		}
 	}
 }

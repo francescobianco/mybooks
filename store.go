@@ -15,26 +15,28 @@ import (
 )
 
 type Book struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Author      string    `json:"author,omitempty"`
-	Description string    `json:"description,omitempty"`
-	Category    string    `json:"category,omitempty"` // category slug
-	Tags        []string  `json:"tags,omitempty"`
-	Series      string    `json:"series,omitempty"`
-	SeriesIndex float64   `json:"series_index,omitempty"`
-	Language    string    `json:"language,omitempty"`
-	Year        int       `json:"year,omitempty"`
-	Publisher   string    `json:"publisher,omitempty"`
-	ISBN        string    `json:"isbn,omitempty"`
-	Format      string    `json:"format"` // pdf | epub
-	FileName    string    `json:"file_name"`
-	Size        int64     `json:"size"`
-	Pages       int       `json:"pages,omitempty"`
-	SHA256      string    `json:"sha256"`
-	CoverExt    string    `json:"cover_ext,omitempty"` // "" when no cover
-	AddedAt     time.Time `json:"added_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          string   `json:"id"`
+	Title       string   `json:"title"`
+	Author      string   `json:"author,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Category    string   `json:"category,omitempty"` // category slug
+	Tags        []string `json:"tags,omitempty"`
+	Series      string   `json:"series,omitempty"`
+	SeriesIndex float64  `json:"series_index,omitempty"`
+	Language    string   `json:"language,omitempty"`
+	Year        int      `json:"year,omitempty"`
+	Publisher   string   `json:"publisher,omitempty"`
+	ISBN        string   `json:"isbn,omitempty"`
+	Format      string   `json:"format"` // pdf | epub
+	FileName    string   `json:"file_name"`
+	Size        int64    `json:"size"`
+	Pages       int      `json:"pages,omitempty"`
+	// PagesEstimated is true when Pages was estimated from EPUB text length.
+	PagesEstimated bool      `json:"pages_estimated,omitempty"`
+	SHA256         string    `json:"sha256"`
+	CoverExt       string    `json:"cover_ext,omitempty"` // "" when no cover
+	AddedAt        time.Time `json:"added_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Category struct {
@@ -295,6 +297,7 @@ func (p BookPatch) Apply(b *Book) error {
 	}
 	if p.Pages != nil {
 		b.Pages = *p.Pages
+		b.PagesEstimated = false
 	}
 	if b.Title == "" {
 		return errors.New("title cannot be empty")

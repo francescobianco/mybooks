@@ -33,7 +33,7 @@
   <td class="info">
     <a class="title" href="/b/{{.ID}}">{{.Title}}</a>
     {{if .Author}}<div class="author">{{.Author}}</div>{{end}}
-    <div class="meta">{{if .Pages}}{{.Pages}} pag.{{else}}{{.Format}}{{end}}{{if .Series}} · {{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}{{end}}</div>
+    <div class="meta">{{if .Pages}}{{if .PagesEstimated}}~{{end}}{{.Pages}} pag.{{else}}{{.Format}}{{end}}{{if .Series}} · {{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}{{end}}</div>
   </td>
 </tr>
 {{end}}

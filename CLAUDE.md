@@ -34,7 +34,10 @@ K="X-API-Key: $MYBOOKS_API_KEY"; U="$MYBOOKS_URL"
 Categories are a tree: top-level ones are broad subjects (Scacchi, Informatica…), with topics below.
 A book's `category` must be an existing slug — create the category first. Prefer putting books in the
 most specific (leaf) category. Always set `language` as a lowercase ISO 639-1 code (`it`, `en`, `es`…):
-the Kobo UI has a language filter built from it. Page count is filled in automatically for PDFs (pdfinfo).
+the Kobo UI has a language filter built from it. Page count is filled in automatically: exact for PDFs (pdfinfo), estimated for EPUBs
+(`pages_estimated: true`, shown as "~N pag."). If you know the real printed page count (e.g. from the PDF
+edition of the same book) PATCH `pages`, which clears the estimate. PDF and EPUB covers are extracted automatically.
+Prefer EPUB over PDF when both exist: it reflows on the Kobo.
 
 ```sh
 curl -fsS -H "$K" -X POST "$U/api/categories" -d '{"name":"Narrativa"}'

@@ -152,6 +152,7 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 		Recursive: q.Get("recursive") == "1", Language: a.lang(r)}
 	title := "Tutti i libri"
 	var crumbs []Category
+	back := "" // link to the level above, shown next to the title
 	var subcats []CategoryCount
 	if slug := r.PathValue("slug"); slug != "" {
 		query.Category = slug
@@ -165,6 +166,12 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 		title = c.Name
 		crumbs = a.store.Path(c.Slug)
 		crumbs = crumbs[:len(crumbs)-1]
+		back = "/"
+		if query.Recursive {
+			back = "/c/" + c.Slug
+		} else if len(crumbs) > 0 {
+			back = "/c/" + crumbs[len(crumbs)-1].Slug
+		}
 		if query.Recursive {
 			title = "Tutto in " + c.Name
 		} else {
@@ -223,6 +230,7 @@ func (a *App) listPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
 		"SortURL": sortURL + "sort=",
 		"Crumbs":  crumbs,
+		"Back":    back,
 		"Subcats": subcats,
 		"Slug":    query.Category,
 		"Title":   title,
