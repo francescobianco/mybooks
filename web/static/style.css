@@ -51,13 +51,28 @@ h2 a.back { text-decoration: none; border: 2px solid #000; padding: 0 12px; marg
 .preview .excerpt { padding: 0 6px 12px; font-style: italic; }
 .preview .excerpt p { margin: 0 0 10px; white-space: pre-line; text-align: justify; }
 #top .langs a.home { font-weight: bold; text-decoration: none; border: 2px solid #000; padding: 2px 8px; }
-.notes { border-top: 2px solid #000; margin-top: 18px; }
-.notes .note { border: 1px solid #000; padding: 6px 10px; margin: 8px 0; }
-.notes .note.claude { border-left: 8px solid #000; }
-.notes .note .who { margin: 0; font-size: 16px; font-weight: bold; }
-.notes .note .text { margin: 4px 0 0; white-space: pre-line; }
-.notes textarea { width: 96%; font-size: 20px; border: 2px solid #000; padding: 6px; font-family: inherit; }
-.notes button { margin-top: 6px; }
-.thread { border-bottom: 1px solid #000; padding: 8px 0; }
-.thread p { margin: 2px 0; }
-.thread .title { font-weight: bold; font-size: 22px; text-decoration: none; }
+
+/* notes thread on the book page */
+.notes { margin: 26px 0 8px; border: 2px solid #000; }
+.notes h2 { margin: 0; padding: 8px 14px; background: #000; color: #fff; font-size: 22px; letter-spacing: .03em; }
+.notes .intro { margin: 0; padding: 12px 14px 0; font-size: 18px; color: #333; }
+.notes .thread { padding: 4px 14px 0; }
+.notes .note { margin: 12px 0; }
+.notes .note.utente { margin-left: 12%; }
+.notes .note.claude { margin-right: 12%; }
+.notes .note .who { margin: 0 0 3px; font: bold 14px sans-serif; text-transform: uppercase; letter-spacing: .08em; }
+.notes .note.utente .who { text-align: right; }
+.notes .note .who span { font-weight: normal; letter-spacing: 0; text-transform: none; color: #444; margin-left: 6px; }
+.notes .note .text { margin: 0; padding: 9px 12px; border: 1px solid #000; white-space: pre-line; font-size: 19px; }
+.notes .note.claude .text { border-left: 7px solid #000; background: #eee; }
+.notes form { margin: 0; padding: 14px; }
+.notes label { display: block; margin-bottom: 6px; font: bold 15px sans-serif; text-transform: uppercase; letter-spacing: .08em; }
+.notes textarea { display: block; width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -webkit-appearance: none; border-radius: 0;
+  min-height: 130px; padding: 10px 12px; border: 2px solid #000; background: #fff; color: #000; font: 20px/1.35 Georgia, serif; resize: vertical; }
+.notes button.send { display: block; width: 100%; margin-top: 10px; padding: 13px; -webkit-appearance: none; border-radius: 0;
+  border: 2px solid #000; background: #000; color: #fff; font: bold 20px sans-serif; letter-spacing: .03em; }
+
+/* notes overview page */
+.thread-item { border-bottom: 1px solid #000; padding: 10px 0; }
+.thread-item p { margin: 2px 0; }
+.thread-item .title { font-weight: bold; font-size: 22px; text-decoration: none; }

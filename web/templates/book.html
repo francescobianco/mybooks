@@ -31,14 +31,22 @@
 {{end}}
 <div class="notes" id="note">
   <h2>Note</h2>
-  {{range .Notes}}
-  <div class="note {{.Author}}"><p class="who">{{if eq .Author "claude"}}Claude{{else}}Tu{{end}} · {{date .CreatedAt}}</p><p class="text">{{.Text}}</p></div>
+  {{if .Notes}}
+  <div class="thread">
+    {{range .Notes}}
+    <div class="note {{.Author}}">
+      <p class="who">{{if eq .Author "claude"}}Claude{{else}}Tu{{end}} <span>{{date .CreatedAt}}</span></p>
+      <p class="text">{{.Text}}</p>
+    </div>
+    {{end}}
+  </div>
   {{else}}
-  <p class="meta">Nessuna nota. Scrivi qui richieste o appunti su questo libro (es. «convertilo in EPUB», «la copertina è sbagliata»): li leggerò alla prossima sessione di sviluppo e risponderò qui.</p>
+  <p class="intro">Scrivi qui richieste o appunti su questo libro, per esempio «convertilo in EPUB» o «la copertina è sbagliata». Li leggerò alla prossima sessione di sviluppo e ti risponderò qui.</p>
   {{end}}
   <form action="/b/{{.Book.ID}}/notes" method="post">
-    <textarea name="text" rows="4" maxlength="4000" placeholder="Scrivi una nota…"></textarea>
-    <button type="submit">Aggiungi nota</button>
+    <label for="note-text">Nuova nota</label>
+    <textarea id="note-text" name="text" rows="4" maxlength="4000" placeholder="Scrivi una nota…"></textarea>
+    <button type="submit" class="send">Invia nota</button>
   </form>
 </div>
 {{template "foot" .}}

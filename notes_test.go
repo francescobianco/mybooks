@@ -43,7 +43,7 @@ func TestNotesThread(t *testing.T) {
 		t.Errorf("thread still pending after reply")
 	}
 	page := do("GET", "/b/b1", "", "").Body.String()
-	if !strings.Contains(page, "Mi converti questo libro in EPUB?") || !strings.Contains(page, "Claude ·") {
+	if !strings.Contains(page, "Mi converti questo libro in EPUB?") || !strings.Contains(page, `<p class="who">Claude <span>`) {
 		t.Error("thread not shown on the book page")
 	}
 	if !strings.Contains(do("GET", "/notes", "", "").Body.String(), "Risposto") {
