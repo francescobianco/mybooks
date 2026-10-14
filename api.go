@@ -64,6 +64,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /api/books/{id}/file", a.requireAPI(a.download))
 	mux.HandleFunc("PUT /api/books/{id}/file", a.requireKey(a.apiPutFile))
 	mux.HandleFunc("GET /api/books/{id}/cover", a.requireAPI(a.cover))
+	mux.HandleFunc("GET /api/books/{id}/text", a.requireKey(a.apiBookText))
 	mux.HandleFunc("PUT /api/books/{id}/cover", a.requireKey(a.apiPutCover))
 	mux.HandleFunc("POST /api/books/{id}/cover/generate", a.requireKey(a.apiGenerateCover))
 	mux.HandleFunc("DELETE /api/books/{id}/cover", a.requireKey(a.apiDeleteCover))
@@ -546,6 +547,43 @@ func (a *App) BackfillPages() {
 			a.store.Update(b.ID, func(b *Book) error { b.Pages, b.PagesEstimated = n, est; return nil })
 		}
 	}
+}
+
+// apiBookText returns the beginning of a book as plain text (EPUB in reading
+// order, PDF via pdftotext), to help choose its preview paragraph.
+//
+//	?chars=N  (EPUB, default 40000)   ?pages=N  (PDF, default 40)
+func (a *App) apiBookText(w http.ResponseWriter, r *http.Request) {
+	b, err := a.store.Get(r.PathValue("id"))
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	text := ""
+	switch b.Format {
+	case "epub":
+		chars, _ := strconv.Atoi(r.URL.Query().Get("chars"))
+		if chars <= 0 || chars > 2_000_000 {
+			chars = 40000
+		}
+		text, err = epubText(a.store.BookPath(b), chars)
+	case "pdf":
+		pages, _ := strconv.Atoi(r.URL.Query().Get("pages"))
+		if pages <= 0 || pages > 400 {
+			pages = 40
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		defer cancel()
+		var out []byte
+		out, err = exec.CommandContext(ctx, "pdftotext", "-f", "1", "-l", strconv.Itoa(pages), a.store.BookPath(b), "-").Output()
+		text = string(out)
+	}
+	if err != nil {
+		writeError(w, 500, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(text))
 }
 
 // ---- categories ----

@@ -8,6 +8,16 @@
   {{if .Series}}<p class="meta">{{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}</p>{{end}}
   <p><a class="button" href="/b/{{.ID}}/download">Scarica {{.Format}} ({{size .Size}})</a></p>
   {{if .Description}}<div class="desc">{{.Description}}</div>{{end}}
+  {{if .Preview}}
+  <div class="preview" id="anteprima">
+    {{if $.ShowPreview}}
+    <p class="toggle"><a href="/b/{{.ID}}">▾ Anteprima</a></p>
+    <div class="excerpt">{{range paragraphs .Preview}}<p>{{.}}</p>{{end}}</div>
+    {{else}}
+    <p class="toggle"><a href="/b/{{.ID}}?anteprima=1#anteprima">▸ Anteprima</a></p>
+    {{end}}
+  </div>
+  {{end}}
   <table class="details">
     {{if $.CategoryPath}}<tr><th>Categoria</th><td>{{range $i, $c := $.CategoryPath}}{{if $i}} › {{end}}<a href="/c/{{$c.Slug}}">{{$c.Name}}</a>{{end}}</td></tr>{{end}}
     {{if .Pages}}<tr><th>Pagine</th><td>{{if .PagesEstimated}}circa {{end}}{{.Pages}}</td></tr>{{end}}

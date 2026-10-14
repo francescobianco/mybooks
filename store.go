@@ -32,11 +32,13 @@ type Book struct {
 	Size        int64    `json:"size"`
 	Pages       int      `json:"pages,omitempty"`
 	// PagesEstimated is true when Pages was estimated from EPUB text length.
-	PagesEstimated bool      `json:"pages_estimated,omitempty"`
-	SHA256         string    `json:"sha256"`
-	CoverExt       string    `json:"cover_ext,omitempty"` // "" when no cover
-	AddedAt        time.Time `json:"added_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	PagesEstimated bool `json:"pages_estimated,omitempty"`
+	// Preview is a short excerpt (the first meaningful paragraph) shown on the book page.
+	Preview   string    `json:"preview,omitempty"`
+	SHA256    string    `json:"sha256"`
+	CoverExt  string    `json:"cover_ext,omitempty"` // "" when no cover
+	AddedAt   time.Time `json:"added_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Category struct {
@@ -69,6 +71,7 @@ type BookPatch struct {
 	Publisher   *string   `json:"publisher"`
 	ISBN        *string   `json:"isbn"`
 	Pages       *int      `json:"pages"`
+	Preview     *string   `json:"preview"`
 }
 
 type library struct {
@@ -295,6 +298,9 @@ func (p BookPatch) Apply(b *Book) error {
 	}
 	if p.Year != nil {
 		b.Year = *p.Year
+	}
+	if p.Preview != nil {
+		b.Preview = strings.TrimSpace(*p.Preview)
 	}
 	if p.Pages != nil {
 		b.Pages = *p.Pages

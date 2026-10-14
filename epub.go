@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"encoding/xml"
 	"errors"
+	"html"
 	"io"
 	"path"
 	"regexp"
@@ -25,6 +26,9 @@ type epubPackage struct {
 		MediaType  string `xml:"media-type,attr"`
 		Properties string `xml:"properties,attr"`
 	} `xml:"manifest>item"`
+	Spine []struct {
+		IDRef string `xml:"idref,attr"`
+	} `xml:"spine>itemref"`
 }
 
 // openEPUB returns the zip reader, the OPF directory and the parsed package.
@@ -168,4 +172,50 @@ func isEPUB(file string) bool {
 		}
 	}
 	return false
+}
+
+var (
+	blockEndRe = regexp.MustCompile(`(?i)</(p|div|h[1-6]|li|blockquote|tr|section)>|<br\s*/?>`)
+	blankRe    = regexp.MustCompile(`\n\s*\n+`)
+	inlineWsRe = regexp.MustCompile(`[ \t\r\f\v]+`)
+)
+
+// epubText returns the book text in reading (spine) order, one paragraph per
+// line, stopping after roughly maxChars characters.
+func epubText(file string, maxChars int) (string, error) {
+	z, dir, pkg, err := openEPUB(file)
+	if err != nil {
+		return "", err
+	}
+	defer z.Close()
+	href := map[string]string{}
+	for _, it := range pkg.Items {
+		href[it.ID] = it.Href
+	}
+	var sb strings.Builder
+	for _, ref := range pkg.Spine {
+		h, ok := href[ref.IDRef]
+		if !ok {
+			continue
+		}
+		f, err := z.Open(zipPath(dir, h))
+		if err != nil {
+			continue
+		}
+		data, _ := io.ReadAll(io.LimitReader(f, 32<<20))
+		f.Close()
+		s := blockEndRe.ReplaceAllString(string(data), "\n")
+		s = html.UnescapeString(tagRe.ReplaceAllString(s, " "))
+		for _, line := range strings.Split(s, "\n") {
+			if line = strings.TrimSpace(inlineWsRe.ReplaceAllString(line, " ")); line != "" {
+				sb.WriteString(line)
+				sb.WriteString("\n")
+			}
+		}
+		sb.WriteString("\n")
+		if sb.Len() > maxChars {
+			break
+		}
+	}
+	return blankRe.ReplaceAllString(sb.String(), "\n\n"), nil
 }

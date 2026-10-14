@@ -13,10 +13,10 @@
 <div id="top">
   <a class="brand" href="/">mybooks</a>
   <form class="search" action="/books" method="get"><input type="text" name="q" value="{{.Query}}" placeholder="Cerca titolo, autore…"><button type="submit">Cerca</button></form>
-  {{if gt (len .Langs) 1}}<div class="langs">Lingua:
+  <div class="langs"><a class="home" href="/">⌂ Home</a>{{if gt (len .Langs) 1}} &nbsp;|&nbsp; Lingua:
     {{if .Lang}}<a href="/lang?next={{.LangNext}}">Tutte</a>{{else}}<b>Tutte</b>{{end}}
-    {{range .Langs}} · {{if eq .Code $.Lang}}<b>{{.Name}}</b>{{else}}<a href="/lang?l={{.Code}}&amp;next={{$.LangNext}}">{{.Name}}</a>{{end}}{{end}}
-  </div>{{end}}
+    {{range .Langs}} · {{if eq .Code $.Lang}}<b>{{.Name}}</b>{{else}}<a href="/lang?l={{.Code}}&amp;next={{$.LangNext}}">{{.Name}}</a>{{end}}{{end}}{{end}}
+  </div>
 </div>
 <div id="main">
 {{end}}
