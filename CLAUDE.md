@@ -5,6 +5,7 @@ behind Caddy (automatic Let's Encrypt). Read by a Kobo browser (no JS, e-ink
 friendly HTML in `web/`), managed through the JSON API below.
 
 - `main.go` config/server · `store.go` library.json + files · `api.go` API · `auth.go` session/key · `web.go` + `web/` Kobo UI
+- Device links: `/k/<token>/...` mirrors the whole web UI for a device (token stored hashed, read-only, revocable, redacted in logs); cookie sessions still work as before.
 - Deploy: `./provision.sh` (idempotent, reads `.env`). Never print `MYBOOKS_API_KEY`.
 - Local run: `MYBOOKS_API_KEY=devdevdevdev go run .` → http://127.0.0.1:8080
 
@@ -30,6 +31,8 @@ K="X-API-Key: $MYBOOKS_API_KEY"; U="$MYBOOKS_URL"
 | PUT | `/api/categories/{slug}` | full replace (omitting `parent` makes it a root) |
 | PATCH | `/api/categories/{slug}` | partial update, e.g. `{"parent":"informatica"}` to move it; cycles are rejected |
 | DELETE | `/api/categories/{slug}` | its books and sub-categories move up to its parent |
+| GET/POST | `/api/devices` | per-device permanent links for browsers that drop cookies (Kobo). POST `{"name"}` returns `token` and `url` once |
+| DELETE | `/api/devices/{id}` | revoke a device link |
 
 Categories are a tree: top-level ones are broad subjects (Scacchi, Informatica…), with topics below.
 A book's `category` must be an existing slug — create the category first. Prefer putting books in the

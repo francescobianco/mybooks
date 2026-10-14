@@ -13,8 +13,12 @@
 <div id="login">
   <h1>mybooks</h1>
   {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+  {{if .Revoked}}<p class="error">Questo link non è più valido: accedi di nuovo.</p>{{end}}
   <form action="/login" method="post">
     <input type="password" name="password" placeholder="Password" autofocus>
+    <p class="remember"><label><input type="checkbox" name="remember" value="1"> Ricorda questo dispositivo</label></p>
+    <p class="remember-hint">Per browser che dimenticano l'accesso alla chiusura (es. Kobo): riceverai un link personale da salvare come home page.</p>
+    <input type="text" name="device" placeholder="Nome dispositivo (es. Kobo)" maxlength="60">
     <button type="submit">Entra</button>
   </form>
 </div>

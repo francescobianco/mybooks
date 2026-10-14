@@ -74,6 +74,7 @@ type BookPatch struct {
 type library struct {
 	Categories []Category `json:"categories"`
 	Books      []*Book    `json:"books"`
+	Devices    []Device   `json:"devices,omitempty"`
 }
 
 type Store struct {

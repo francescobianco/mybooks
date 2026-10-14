@@ -57,6 +57,9 @@ func (a *App) validAPIKey(r *http.Request) bool {
 }
 
 func (a *App) authenticated(r *http.Request) bool {
+	if _, ok := deviceFrom(r); ok {
+		return true
+	}
 	return a.validAPIKey(r) || a.validSession(r)
 }
 

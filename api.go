@@ -47,6 +47,8 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /c/{slug}", a.requireWeb(a.listPage))
 	mux.HandleFunc("GET /b/{id}", a.requireWeb(a.bookPage))
 	mux.HandleFunc("GET /lang", a.requireWeb(a.setLang))
+	mux.HandleFunc("GET /forget", a.requireWeb(a.forgetPage))
+	mux.HandleFunc("POST /forget", a.requireWeb(a.forgetSubmit))
 	mux.HandleFunc("GET /b/{id}/download", a.requireWeb(a.download))
 	mux.HandleFunc("GET /b/{id}/cover", a.requireWeb(a.cover))
 
@@ -70,10 +72,21 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("PUT /api/categories/{slug}", a.requireKey(a.apiPutCategory))
 	mux.HandleFunc("PATCH /api/categories/{slug}", a.requireKey(a.apiPatchCategory))
 	mux.HandleFunc("DELETE /api/categories/{slug}", a.requireKey(a.apiDeleteCategory))
+	mux.HandleFunc("GET /api/devices", a.requireKey(a.apiListDevices))
+	mux.HandleFunc("POST /api/devices", a.requireKey(a.apiCreateDevice))
+	mux.HandleFunc("DELETE /api/devices/{id}", a.requireKey(a.apiDeleteDevice))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	})
-	return mux
+	return noReferrer(a.withDevices(mux))
+}
+
+// noReferrer keeps device tokens in URLs from leaking through the Referer header.
+func noReferrer(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // requireKey protects mutating endpoints: only the API key is accepted, never

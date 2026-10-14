@@ -66,7 +66,7 @@ func (a *App) setLang(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") {
 		next = "/"
 	}
-	http.Redirect(w, r, next, http.StatusSeeOther)
+	redirect(w, r, next)
 }
 
 // page renders a template adding what the layout needs (language bar).
@@ -81,7 +81,13 @@ func (a *App) page(w http.ResponseWriter, r *http.Request, name string, data map
 		next += "?" + q.Encode()
 	}
 	data["LangNext"] = next
-	render(w, name, data)
+	data["Base"] = base(r)
+	var buf bytes.Buffer
+	if err := templates.ExecuteTemplate(&buf, name, data); err != nil {
+		log.Printf("template %s: %v", name, err)
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(withBase(buf.Bytes(), base(r)))
 }
 
 // nonEmpty hides categories without books (in the selected language, if any).
@@ -121,7 +127,7 @@ func (a *App) loginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	render(w, "login.html", map[string]any{"Title": "Login"})
+	render(w, "login.html", map[string]any{"Title": "Login", "Revoked": r.URL.Query().Has("revocato")})
 }
 
 func (a *App) loginSubmit(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +139,15 @@ func (a *App) loginSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.setSession(w, r)
+	if r.PostFormValue("remember") != "" {
+		// browsers that forget cookies (Kobo) get a permanent per-device link
+		_, token, err := a.store.CreateDevice(r.PostFormValue("device"))
+		if err == nil {
+			http.Redirect(w, r, "/k/"+token+"/?benvenuto=1", http.StatusSeeOther)
+			return
+		}
+		log.Printf("create device: %v", err)
+	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -148,8 +163,13 @@ func (a *App) homePage(w http.ResponseWriter, r *http.Request) {
 	if len(recent) > 6 {
 		recent = recent[:6]
 	}
+	welcome := ""
+	if r.URL.Query().Has("benvenuto") && base(r) != "" {
+		welcome = deviceURL(r, strings.TrimPrefix(base(r), "/k/"))
+	}
 	a.page(w, r, "home.html", map[string]any{
 		"Title":         "Libreria",
+		"Welcome":       welcome,
 		"Categories":    nonEmpty(a.store.Children("", lang), lang),
 		"Uncategorized": a.store.UncategorizedCount(lang),
 		"Recent":        recent,

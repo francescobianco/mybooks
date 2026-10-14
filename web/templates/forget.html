@@ -1,0 +1,6 @@
+{{template "head" .}}
+<h2>Disconnetti dispositivo</h2>
+<p>Il link personale di «{{.Device.Name}}» smetterà di funzionare e dovrai accedere di nuovo con la password.</p>
+<form action="/forget" method="post"><button type="submit">Disconnetti</button></form>
+<p><a href="/">« Annulla</a></p>
+{{template "foot" .}}
