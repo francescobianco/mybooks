@@ -31,6 +31,7 @@ var templates = template.Must(template.New("").Funcs(template.FuncMap{
 		}
 		return fmt.Sprintf("%d B", n)
 	},
+	"upper": strings.ToUpper,
 	"coverURL": func(b *Book) string {
 		return fmt.Sprintf("/b/%s/cover?v=%d", b.ID, b.UpdatedAt.Unix())
 	},

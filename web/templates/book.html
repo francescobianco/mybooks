@@ -4,7 +4,7 @@
   {{if .CoverExt}}<img class="cover" src="{{coverURL .}}" alt="">{{end}}
   <h1>{{.Title}}</h1>
   {{if .Author}}<p class="author">{{.Author}}</p>{{end}}
-  <p class="meta">{{if .Pages}}{{if .PagesEstimated}}~{{end}}{{.Pages}} pag. · {{end}}{{.Format}}</p>
+  <p class="meta">{{upper .Format}}{{if .Pages}} · {{if .PagesEstimated}}~{{end}}{{.Pages}} pag.{{end}}</p>
   {{if .Series}}<p class="meta">{{.Series}}{{if .SeriesIndex}} #{{.SeriesIndex}}{{end}}</p>{{end}}
   <p><a class="button" href="/b/{{.ID}}/download">Scarica {{.Format}} ({{size .Size}})</a></p>
   {{if .Description}}<div class="desc">{{.Description}}</div>{{end}}
