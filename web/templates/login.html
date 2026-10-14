@@ -16,17 +16,14 @@
     {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
     {{if .Revoked}}<p class="error">Questo link non è più valido: accedi di nuovo.</p>{{end}}
     <form action="/login" method="post">
+      <label for="device">Nome dispositivo</label>
+      <input type="text" id="device" name="device" value="{{.DeviceName}}" maxlength="60">
       <label for="password">Password</label>
       <input type="password" id="password" name="password" autofocus>
-      <button type="submit" class="primary">Entra</button>
-
-      <div class="remember">
-        <p class="sep"><span>oppure</span></p>
-        <p class="hint">Se questo browser dimentica l'accesso quando lo chiudi (per esempio sul <b>Kobo</b>), entra con il pulsante qui sotto: riceverai un link personale da salvare come home page.</p>
-        <label for="device">Nome del dispositivo</label>
-        <input type="text" id="device" name="device" value="{{.DeviceName}}" maxlength="60">
-        <button type="submit" name="remember" value="1" class="secondary">Entra e ricorda questo dispositivo</button>
-      </div>
+      <table class="buttons"><tr>
+        <td><button type="submit" class="primary">Entra</button></td>
+        <td><button type="submit" name="remember" value="1" class="secondary">Entra e ricorda</button></td>
+      </tr></table>
     </form>
   </div>
 </div>
