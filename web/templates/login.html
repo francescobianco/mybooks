@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login · mybooks</title>
-<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="{{asset "style.css"}}">
 <link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{{asset "favicon.svg"}}" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
 <div id="login">
   <div class="card">
-    <div class="brand"><img src="/static/favicon.svg" alt="" width="56" height="56"><h1>mybooks</h1></div>
+    <div class="brand"><img src="{{asset "favicon.svg"}}" alt="" width="56" height="56"><h1>mybooks</h1></div>
     {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
     {{if .Revoked}}<p class="error">Questo link non è più valido: accedi di nuovo.</p>{{end}}
     <form action="/login" method="post">

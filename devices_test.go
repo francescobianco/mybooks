@@ -39,7 +39,7 @@ func TestDeviceLinks(t *testing.T) {
 	// the token alone authenticates, and internal links keep the prefix
 	rec = do("GET", base+"/?benvenuto=1", "", nil)
 	body := rec.Body.String()
-	if rec.Code != 200 || !strings.Contains(body, `href="`+base+`/c/sicilia"`) || !strings.Contains(body, `href="/static/style.css"`) {
+	if rec.Code != 200 || !strings.Contains(body, `href="`+base+`/c/sicilia"`) || !strings.Contains(body, `href="/static/style.css?v=`) {
 		t.Fatalf("home via token: %d\n%s", rec.Code, body)
 	}
 	if !strings.Contains(body, "Dispositivo ricordato") || !strings.Contains(body, base+"/forget") {

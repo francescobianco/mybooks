@@ -40,8 +40,6 @@
     </div>
     {{end}}
   </div>
-  {{else}}
-  <p class="intro">Scrivi qui richieste o appunti su questo libro, per esempio «convertilo in EPUB» o «la copertina è sbagliata». Li leggerò alla prossima sessione di sviluppo e ti risponderò qui.</p>
   {{end}}
   <form action="/b/{{.Book.ID}}/notes" method="post">
     <label for="note-text">Nuova nota</label>

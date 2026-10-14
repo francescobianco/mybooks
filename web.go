@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -31,6 +33,7 @@ var templates = template.Must(template.New("").Funcs(template.FuncMap{
 		}
 		return fmt.Sprintf("%d B", n)
 	},
+	"asset": asset,
 	"upper": strings.ToUpper,
 	"date": func(t time.Time) string {
 		return t.In(time.Local).Format("02/01/2006 15:04")
@@ -52,8 +55,28 @@ var templates = template.Must(template.New("").Funcs(template.FuncMap{
 
 func serveStatic(w http.ResponseWriter, r *http.Request) {
 	sub, _ := fs.Sub(staticFS, "web")
-	w.Header().Set("Cache-Control", "public, max-age=86400")
+	if r.URL.Query().Get("v") != "" {
+		// versioned URL (see asset): the content never changes under it
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	} else {
+		w.Header().Set("Cache-Control", "no-cache")
+	}
 	http.FileServer(http.FS(sub)).ServeHTTP(w, r)
+}
+
+var assetVersions = map[string]string{}
+
+// asset returns a cache-busting URL for an embedded static file, e.g.
+// /static/style.css?v=3f2a91c0, so browsers fetch a new copy after a deploy.
+func asset(name string) string {
+	v, ok := assetVersions[name]
+	if !ok {
+		data, _ := staticFS.ReadFile("web/static/" + name)
+		h := sha256.Sum256(data)
+		v = hex.EncodeToString(h[:4])
+		assetVersions[name] = v
+	}
+	return "/static/" + name + "?v=" + v
 }
 
 const langCookie = "mybooks_lang"
