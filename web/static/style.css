@@ -38,8 +38,6 @@ table.details td { padding: 6px 4px; }
 #top .langs a, #top .langs b { padding: 4px 2px; }
 #top .langs b { border-bottom: 3px solid #000; }
 h2 a.back { text-decoration: none; border: 2px solid #000; padding: 0 12px; margin-right: 6px; }
-.welcome { border: 3px solid #000; padding: 10px 14px; margin: 12px 0; }
-.welcome .link { font-family: monospace; font-size: 18px; word-break: break-all; border: 1px dashed #000; padding: 8px; }
 .preview { border-top: 2px solid #000; border-bottom: 2px solid #000; margin: 14px 0; }
 .preview .toggle { margin: 0; }
 .preview .toggle a { display: block; padding: 12px 4px; font-size: 22px; font-weight: bold; text-decoration: none; }

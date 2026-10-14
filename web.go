@@ -180,7 +180,7 @@ func (a *App) loginSubmit(w http.ResponseWriter, r *http.Request) {
 		// browsers that forget cookies (Kobo) get a permanent per-device link
 		_, token, err := a.store.CreateDevice(r.PostFormValue("device"))
 		if err == nil {
-			http.Redirect(w, r, "/k/"+token+"/?benvenuto=1", http.StatusSeeOther)
+			http.Redirect(w, r, "/k/"+token+"/", http.StatusSeeOther)
 			return
 		}
 		log.Printf("create device: %v", err)
@@ -200,13 +200,8 @@ func (a *App) homePage(w http.ResponseWriter, r *http.Request) {
 	if len(recent) > 6 {
 		recent = recent[:6]
 	}
-	welcome := ""
-	if r.URL.Query().Has("benvenuto") && base(r) != "" {
-		welcome = deviceURL(r, strings.TrimPrefix(base(r), "/k/"))
-	}
 	a.page(w, r, "home.html", map[string]any{
 		"Title":         "Libreria",
-		"Welcome":       welcome,
 		"Categories":    nonEmpty(a.store.Children("", lang), lang),
 		"Uncategorized": a.store.UncategorizedCount(lang),
 		"Recent":        recent,

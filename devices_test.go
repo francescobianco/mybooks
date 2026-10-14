@@ -37,13 +37,13 @@ func TestDeviceLinks(t *testing.T) {
 	base := strings.TrimSuffix(strings.SplitN(loc, "?", 2)[0], "/")
 
 	// the token alone authenticates, and internal links keep the prefix
-	rec = do("GET", base+"/?benvenuto=1", "", nil)
+	rec = do("GET", base+"/", "", nil)
 	body := rec.Body.String()
 	if rec.Code != 200 || !strings.Contains(body, `href="`+base+`/c/sicilia"`) || !strings.Contains(body, `href="/static/style.css?v=`) {
 		t.Fatalf("home via token: %d\n%s", rec.Code, body)
 	}
-	if !strings.Contains(body, "Dispositivo ricordato") || !strings.Contains(body, base+"/forget") {
-		t.Error("welcome banner or forget link missing")
+	if !strings.Contains(body, base+"/forget") {
+		t.Error("forget link missing")
 	}
 	if rec.Header().Get("Referrer-Policy") != "no-referrer" {
 		t.Error("missing Referrer-Policy")

@@ -1,11 +1,4 @@
 {{template "head" .}}
-{{if .Welcome}}
-<div class="welcome">
-  <p><b>Dispositivo ricordato.</b> Salva questa pagina come <b>home page</b> del browser (sul Kobo: menu del browser › Imposta come home page, oppure aggiungila ai preferiti). Da questo link resterai sempre connesso:</p>
-  <p class="link">{{.Welcome}}</p>
-  <p class="meta">Il link è personale: non condividerlo. Puoi revocarlo con «Disconnetti dispositivo» in fondo alla pagina.</p>
-</div>
-{{end}}
 <h2>Categorie</h2>
 {{template "cats" .Categories}}
 <table class="cats">
