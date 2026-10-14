@@ -113,3 +113,10 @@ body.has-pager { padding-bottom: 240px; }
 .notes form.composing textarea { min-height: 0; height: 170px; }
 .notes form.composing table.note-buttons td.cancel { display: table-cell; }
 body.composing #pager { display: none; }
+
+/* house icon drawn with CSS (the ⌂ glyph is missing from the Kobo fonts) */
+#pager #pg-home { line-height: normal; padding-top: 12px; }
+#pg-home .roof { display: block; width: 0; height: 0; margin: 0 auto; border-left: 17px solid transparent;
+  border-right: 17px solid transparent; border-bottom: 14px solid #000; }
+#pg-home .house { display: block; position: relative; width: 22px; height: 15px; margin: 0 auto; background: #000; }
+#pg-home .door { display: block; position: absolute; left: 8px; bottom: 0; width: 6px; height: 9px; background: #fff; }

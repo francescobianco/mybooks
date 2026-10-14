@@ -13,7 +13,7 @@
 <div id="top">
   <a class="brand" href="/">mybooks</a>
   <form class="search" action="/books" method="get"><input type="text" name="q" value="{{.Query}}" placeholder="Cerca titolo, autore…"><button type="submit">Cerca</button></form>
-  <div class="langs"><a class="home" href="/">⌂ Home</a>{{if gt (len .Langs) 1}} &nbsp;|&nbsp; Lingua:
+  <div class="langs"><a class="home" href="/">Home</a>{{if gt (len .Langs) 1}} &nbsp;|&nbsp; Lingua:
     {{if .Lang}}<a href="/lang?next={{.LangNext}}">Tutte</a>{{else}}<b>Tutte</b>{{end}}
     {{range .Langs}} · {{if eq .Code $.Lang}}<b>{{.Name}}</b>{{else}}<a href="/lang?l={{.Code}}&amp;next={{$.LangNext}}">{{.Name}}</a>{{end}}{{end}}{{end}}
   </div>
@@ -25,7 +25,7 @@
 </div>
 <div id="bottom"><a href="/">Home</a> · <a href="/books">Tutti</a> · <a href="/notes">Note</a> · {{if .Base}}<a href="/forget">Disconnetti dispositivo</a>{{else}}<a href="/logout">Esci</a>{{end}}</div>
 <div id="pager" class="hidden">
-  <a id="pg-home" href="/" aria-label="Home">⌂</a>
+  <a id="pg-home" href="/" aria-label="Home"><span class="roof"></span><span class="house"><span class="door"></span></span></a>
   <button type="button" id="pg-up" aria-label="Pagina su">▲</button>
   <button type="button" id="pg-down" aria-label="Pagina giù">▼</button>
 </div>
