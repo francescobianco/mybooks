@@ -24,6 +24,24 @@
 {{define "foot"}}
 </div>
 <div id="bottom"><a href="/">Home</a> · <a href="/books">Tutti</a> · <a href="/notes">Note</a> · {{if .Base}}<a href="/forget">Disconnetti dispositivo</a>{{else}}<a href="/logout">Esci</a>{{end}}</div>
+<div id="pager" class="hidden">
+  <button type="button" id="pg-up" aria-label="Pagina su">▲</button>
+  <button type="button" id="pg-down" aria-label="Pagina giù">▼</button>
+</div>
+<script>
+(function () {
+  // page-wise scrolling for e-ink: jump 2/3 of the screen, no animation
+  var pager = document.getElementById('pager');
+  function step(dir) {
+    var h = window.innerHeight || document.documentElement.clientHeight;
+    window.scrollBy(0, dir * Math.round(h * 2 / 3));
+  }
+  document.getElementById('pg-up').onclick = function () { step(-1); };
+  document.getElementById('pg-down').onclick = function () { step(1); };
+  pager.className = '';
+  document.body.className += ' has-pager';
+})();
+</script>
 </body>
 </html>
 {{end}}
