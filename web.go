@@ -32,6 +32,10 @@ var templates = template.Must(template.New("").Funcs(template.FuncMap{
 		return fmt.Sprintf("%d B", n)
 	},
 	"upper": strings.ToUpper,
+	"date": func(t time.Time) string {
+		return t.In(time.Local).Format("02/01/2006 15:04")
+	},
+	"last": func(n []Note) Note { return n[len(n)-1] },
 	"paragraphs": func(s string) []string {
 		var out []string
 		for _, p := range strings.Split(s, "\n\n") {
@@ -299,7 +303,8 @@ func (a *App) bookPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	data := map[string]any{"Title": b.Title, "Book": b, "ShowPreview": r.URL.Query().Has("anteprima")}
+	data := map[string]any{"Title": b.Title, "Book": b, "ShowPreview": r.URL.Query().Has("anteprima"),
+		"Notes": a.store.BookNotes(b.ID)}
 	if b.Category != "" {
 		data["CategoryPath"] = a.store.Path(b.Category)
 	}

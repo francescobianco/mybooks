@@ -1,0 +1,11 @@
+{{template "head" .}}
+<h2>Note</h2>
+{{range .Threads}}
+<div class="thread">
+  <p><a class="title" href="/b/{{.BookID}}#note">{{.Title}}</a>{{if .Author}} <span class="meta">— {{.Author}}</span>{{end}}</p>
+  <p class="meta">{{if .Pending}}<b>In attesa di risposta</b>{{else}}Risposto{{end}} · {{len .Notes}} note · ultima: {{with last .Notes}}{{if eq .Author "claude"}}Claude{{else}}Tu{{end}}, {{date .CreatedAt}}{{end}}</p>
+</div>
+{{else}}
+<p class="empty">Nessuna nota. Puoi lasciarne una in fondo alla pagina di ogni libro.</p>
+{{end}}
+{{template "foot" .}}

@@ -78,6 +78,7 @@ type library struct {
 	Categories []Category `json:"categories"`
 	Books      []*Book    `json:"books"`
 	Devices    []Device   `json:"devices,omitempty"`
+	Notes      []Note     `json:"notes,omitempty"`
 }
 
 type Store struct {
@@ -268,6 +269,13 @@ func (s *Store) Delete(id string) (*Book, error) {
 		return nil, ErrNotFound
 	}
 	s.lib.Books = append(s.lib.Books[:i], s.lib.Books[i+1:]...)
+	notes := s.lib.Notes[:0]
+	for _, n := range s.lib.Notes {
+		if n.BookID != id {
+			notes = append(notes, n)
+		}
+	}
+	s.lib.Notes = notes
 	return b, s.save()
 }
 

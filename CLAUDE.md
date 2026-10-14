@@ -1,5 +1,17 @@
 # mybooks — notes for coding agents
 
+## FIRST THING IN EVERY SESSION: process the reader's notes
+The reader leaves notes/requests on book pages (thread under each book, page `/notes`).
+At the start of a development session fetch the pending ones and handle them:
+
+```sh
+set -a; . ./.env; set +a; K="X-API-Key: $MYBOOKS_API_KEY"; U="$MYBOOKS_URL"
+curl -fsS -H "$K" "$U/api/notes?pending=1"        # threads whose last note is from the reader
+# do the work, then reply in the thread (author defaults to "claude"):
+curl -fsS -H "$K" -X POST "$U/api/books/ID/notes" -d '{"text":"Fatto: … / Non si può fare perché …"}'
+```
+Reply in Italian, briefly, saying what was done or why not. A thread stops being pending once Claude has the last word.
+
 Personal PDF/EPUB library. Go, zero dependencies, plain HTTP on 127.0.0.1:8080
 behind Caddy (automatic Let's Encrypt). Read by a Kobo browser (no JS, e-ink
 friendly HTML in `web/`), managed through the JSON API below.
@@ -22,7 +34,7 @@ K="X-API-Key: $MYBOOKS_API_KEY"; U="$MYBOOKS_URL"
 |---|---|---|
 | GET | `/api/books?q=&category=&recursive=1&lang=&tag=&sort=title\|author\|added` | `category=-` = uncategorized; `recursive=1` includes sub-categories; `lang=it` filters by language |
 | POST | `/api/books` | multipart: `file` (PDF/EPUB, required), `cover` (JPEG/PNG), `metadata` (JSON). 409 + existing book if same sha256. PDF without cover → first page auto-rendered (`?autocover=0` to skip) |
-| GET/PATCH/DELETE | `/api/books/{id}` | PATCH JSON: any of `title author description category tags series series_index language year publisher isbn pages` |
+| GET/PATCH/DELETE | `/api/books/{id}` | PATCH JSON: any of `title author description category tags series series_index language year publisher isbn pages preview` (`preview` = first meaningful paragraph of the actual work, no prefaces/front matter; paragraphs separated by a blank line) |
 | GET/PUT | `/api/books/{id}/file` | PUT: multipart `file` or raw body |
 | GET/PUT/DELETE | `/api/books/{id}/cover` | PUT: multipart `cover` or raw body |
 | POST | `/api/books/{id}/cover/generate` | re-render first PDF page |
@@ -31,6 +43,10 @@ K="X-API-Key: $MYBOOKS_API_KEY"; U="$MYBOOKS_URL"
 | PUT | `/api/categories/{slug}` | full replace (omitting `parent` makes it a root) |
 | PATCH | `/api/categories/{slug}` | partial update, e.g. `{"parent":"informatica"}` to move it; cycles are rejected |
 | DELETE | `/api/categories/{slug}` | its books and sub-categories move up to its parent |
+| GET | `/api/notes?pending=1` | note threads grouped by book (`pending` = last note from the reader) |
+| GET/POST | `/api/books/{id}/notes` | read a book's thread / reply `{"text"}` (author "claude") |
+| DELETE | `/api/notes/{id}` | delete a note |
+| GET | `/api/books/{id}/text?chars=&pages=` | beginning of the book as plain text (to pick previews) |
 | GET/POST | `/api/devices` | per-device permanent links for browsers that drop cookies (Kobo). POST `{"name"}` returns `token` and `url` once |
 | DELETE | `/api/devices/{id}` | revoke a device link |
 

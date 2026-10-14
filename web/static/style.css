@@ -51,3 +51,13 @@ h2 a.back { text-decoration: none; border: 2px solid #000; padding: 0 12px; marg
 .preview .excerpt { padding: 0 6px 12px; font-style: italic; }
 .preview .excerpt p { margin: 0 0 10px; white-space: pre-line; text-align: justify; }
 #top .langs a.home { font-weight: bold; text-decoration: none; border: 2px solid #000; padding: 2px 8px; }
+.notes { border-top: 2px solid #000; margin-top: 18px; }
+.notes .note { border: 1px solid #000; padding: 6px 10px; margin: 8px 0; }
+.notes .note.claude { border-left: 8px solid #000; }
+.notes .note .who { margin: 0; font-size: 16px; font-weight: bold; }
+.notes .note .text { margin: 4px 0 0; white-space: pre-line; }
+.notes textarea { width: 96%; font-size: 20px; border: 2px solid #000; padding: 6px; font-family: inherit; }
+.notes button { margin-top: 6px; }
+.thread { border-bottom: 1px solid #000; padding: 8px 0; }
+.thread p { margin: 2px 0; }
+.thread .title { font-weight: bold; font-size: 22px; text-decoration: none; }
