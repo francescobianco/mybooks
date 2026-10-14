@@ -96,6 +96,20 @@ input:focus, textarea:focus, button:focus { outline: none; }
 /* fixed page-scroll buttons (bottom right, under the thumb) */
 #pager { position: fixed; right: 12px; bottom: 12px; z-index: 10; }
 #pager.hidden { display: none; }
-#pager button { display: block; width: 64px; height: 64px; margin: 10px 0 0; padding: 0; -webkit-appearance: none; border-radius: 0;
-  border: 3px solid #000; background: #fff; color: #000; font: bold 30px/1 sans-serif; }
-body.has-pager { padding-bottom: 160px; }
+#pager button, #pager a { display: block; box-sizing: border-box; -webkit-box-sizing: border-box; text-align: center; text-decoration: none; line-height: 58px; width: 64px; height: 64px; margin: 10px 0 0; padding: 0; -webkit-appearance: none; border-radius: 0;
+  border: 3px solid #000; background: #fff; color: #000; font-weight: bold; font-size: 30px; font-family: sans-serif; }
+body.has-pager { padding-bottom: 240px; }
+
+/* note buttons: "Annulla" only shows while writing */
+.notes table.note-buttons { width: 100%; margin-top: 10px; border-collapse: collapse; table-layout: fixed; }
+.notes table.note-buttons td { padding: 0; vertical-align: top; }
+.notes table.note-buttons td.cancel { display: none; width: 34%; padding-left: 10px; }
+.notes table.note-buttons button { margin-top: 0; width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; }
+.notes button.cancel { display: block; padding: 13px; -webkit-appearance: none; border-radius: 0; border: 2px solid #000;
+  background: #fff; color: #000; font: bold 20px sans-serif; }
+/* writing a note: pin the form to the top, above the on-screen keyboard */
+.notes form.composing { position: fixed; top: 0; left: 0; right: 0; z-index: 30; margin: 0; padding: 12px 14px 14px;
+  background: #fff; border-bottom: 3px solid #000; }
+.notes form.composing textarea { min-height: 0; height: 170px; }
+.notes form.composing table.note-buttons td.cancel { display: table-cell; }
+body.composing #pager { display: none; }

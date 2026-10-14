@@ -44,7 +44,10 @@
   <form action="/b/{{.Book.ID}}/notes" method="post">
     <label for="note-text">Nuova nota</label>
     <textarea id="note-text" name="text" rows="4" maxlength="4000" placeholder="Scrivi una nota…"></textarea>
-    <button type="submit" class="send">Invia nota</button>
+    <table class="note-buttons"><tr>
+      <td><button type="submit" class="send">Invia nota</button></td>
+      <td class="cancel"><button type="button" id="note-cancel" class="cancel">Annulla</button></td>
+    </tr></table>
   </form>
 </div>
 {{template "foot" .}}

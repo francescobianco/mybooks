@@ -25,6 +25,7 @@
 </div>
 <div id="bottom"><a href="/">Home</a> · <a href="/books">Tutti</a> · <a href="/notes">Note</a> · {{if .Base}}<a href="/forget">Disconnetti dispositivo</a>{{else}}<a href="/logout">Esci</a>{{end}}</div>
 <div id="pager" class="hidden">
+  <a id="pg-home" href="/" aria-label="Home">⌂</a>
   <button type="button" id="pg-up" aria-label="Pagina su">▲</button>
   <button type="button" id="pg-down" aria-label="Pagina giù">▼</button>
 </div>
@@ -40,6 +41,26 @@
   document.getElementById('pg-down').onclick = function () { step(1); };
   pager.className = '';
   document.body.className += ' has-pager';
+
+  // note form: the Kobo keyboard covers the lower half and the page does not
+  // resize, so while writing the form is pinned to the top of the screen.
+  // It stays there until "Invia" or "Annulla" (moving it on blur would make
+  // the send button jump away from the finger).
+  var text = document.getElementById('note-text');
+  if (text) {
+    var form = text.form;
+    text.onfocus = function () {
+      if (form.className.indexOf('composing') < 0) {
+        form.className += ' composing';
+        document.body.className += ' composing';
+      }
+    };
+    document.getElementById('note-cancel').onclick = function () {
+      form.className = form.className.replace(/ ?composing/g, '');
+      document.body.className = document.body.className.replace(/ ?composing/g, '');
+      text.blur();
+    };
+  }
 })();
 </script>
 </body>
