@@ -141,7 +141,7 @@ func (a *App) loginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	render(w, "login.html", map[string]any{"Title": "Login", "Revoked": r.URL.Query().Has("revocato")})
+	render(w, "login.html", map[string]any{"Title": "Login", "Revoked": r.URL.Query().Has("revocato"), "DeviceName": guessDeviceName(r.UserAgent())})
 }
 
 func (a *App) loginSubmit(w http.ResponseWriter, r *http.Request) {
@@ -149,7 +149,7 @@ func (a *App) loginSubmit(w http.ResponseWriter, r *http.Request) {
 	if !a.checkKey(r.PostFormValue("password")) {
 		time.Sleep(2 * time.Second) // slow down guessing
 		w.WriteHeader(http.StatusUnauthorized)
-		render(w, "login.html", map[string]any{"Title": "Login", "Error": "Password errata"})
+		render(w, "login.html", map[string]any{"Title": "Login", "Error": "Password errata", "DeviceName": guessDeviceName(r.UserAgent())})
 		return
 	}
 	a.setSession(w, r)
@@ -309,4 +309,29 @@ func (a *App) bookPage(w http.ResponseWriter, r *http.Request) {
 		data["CategoryPath"] = a.store.Path(b.Category)
 	}
 	a.page(w, r, "book.html", data)
+}
+
+// guessDeviceName proposes a name for "remember this device" from the User-Agent.
+func guessDeviceName(ua string) string {
+	switch l := strings.ToLower(ua); {
+	case strings.Contains(l, "kobo"):
+		return "Kobo"
+	case strings.Contains(l, "kindle") || strings.Contains(l, "silk"):
+		return "Kindle"
+	case strings.Contains(l, "ipad"):
+		return "iPad"
+	case strings.Contains(l, "iphone"):
+		return "iPhone"
+	case strings.Contains(l, "android") && strings.Contains(l, "mobile"):
+		return "Telefono Android"
+	case strings.Contains(l, "android"):
+		return "Tablet Android"
+	case strings.Contains(l, "windows"):
+		return "PC Windows"
+	case strings.Contains(l, "macintosh"):
+		return "Mac"
+	case strings.Contains(l, "linux"):
+		return "PC Linux"
+	}
+	return "Il mio dispositivo"
 }

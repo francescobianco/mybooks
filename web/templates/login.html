@@ -11,16 +11,24 @@
 </head>
 <body>
 <div id="login">
-  <h1>mybooks</h1>
-  {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
-  {{if .Revoked}}<p class="error">Questo link non è più valido: accedi di nuovo.</p>{{end}}
-  <form action="/login" method="post">
-    <input type="password" name="password" placeholder="Password" autofocus>
-    <p class="remember"><label><input type="checkbox" name="remember" value="1"> Ricorda questo dispositivo</label></p>
-    <p class="remember-hint">Per browser che dimenticano l'accesso alla chiusura (es. Kobo): riceverai un link personale da salvare come home page.</p>
-    <input type="text" name="device" placeholder="Nome dispositivo (es. Kobo)" maxlength="60">
-    <button type="submit">Entra</button>
-  </form>
+  <div class="card">
+    <div class="brand"><img src="/static/favicon.svg" alt="" width="56" height="56"><h1>mybooks</h1></div>
+    {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+    {{if .Revoked}}<p class="error">Questo link non è più valido: accedi di nuovo.</p>{{end}}
+    <form action="/login" method="post">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autofocus>
+      <button type="submit" class="primary">Entra</button>
+
+      <div class="remember">
+        <p class="sep"><span>oppure</span></p>
+        <p class="hint">Se questo browser dimentica l'accesso quando lo chiudi (per esempio sul <b>Kobo</b>), entra con il pulsante qui sotto: riceverai un link personale da salvare come home page.</p>
+        <label for="device">Nome del dispositivo</label>
+        <input type="text" id="device" name="device" value="{{.DeviceName}}" maxlength="60">
+        <button type="submit" name="remember" value="1" class="secondary">Entra e ricorda questo dispositivo</button>
+      </div>
+    </form>
+  </div>
 </div>
 </body>
 </html>
